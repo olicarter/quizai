@@ -14,8 +14,8 @@ export function Button({
   return (
     <button
       className={cn(
-        `bg-rose-500 font-semibold h-14 px-7 rounded-full shrink-0 text-rose-50 text-lg
-        disabled:cursor-not-allowed disabled:opacity-50 enabled:hover:bg-rose-600`,
+        `bg-[hsl(340deg,100%,60%)] font-semibold h-16 px-7 rounded-full shrink-0 text-white text-xl
+        disabled:cursor-not-allowed disabled:text-rose-300 enabled:hover:bg-[hsl(340deg,90%,50%)]`,
         loading && 'animate-pulse cursor-wait opacity-50',
         className,
       )}

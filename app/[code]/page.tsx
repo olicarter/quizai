@@ -3,11 +3,13 @@
 import { PartySocket } from 'partysocket'
 import usePartySocket from 'partysocket/react'
 import { useEffect, useRef, useState } from 'react'
+import { readableColor } from 'polished'
 import { EventType, type Player, type Quiz } from '@/types'
 import { TextInput } from '@/components/TextInput'
 import { Button } from '@/components/Button'
 import { cn } from '@/utils/cn'
 import { Loading } from '@/components/Loading'
+import { SubmitButton } from '@/components/SubmitButton'
 
 export default function QuizPage({
   params: { code },
@@ -27,20 +29,29 @@ export default function QuizPage({
     return <p className="animate-pulse opacity-0 text-center">Loading...</p>
   }
 
-  if (!id) {
-    return (
-      <div className="flex flex-col gap-4 max-w-96 self-center w-full">
+  if (id) return <Lobby id={id} room={code} />
+
+  return (
+    <div className="flex flex-col gap-4">
+      <h3 className="cursor-default font-bold text-2xl text-center text-[hsl(340deg,100%,60%)]">
+        Enter your name
+      </h3>
+      <div className="bg-white flex rounded-full">
         <TextInput
           autoComplete="off"
-          name="name"
+          className="bg-transparent focus:ring-[hsl(340deg,100%,60%)] grow pl-6 rounded-r-none selection:bg-[hsl(340deg,100%,60%)] selection:text-amber-50"
+          minLength={1}
+          name="code"
           onChange={e => setName(e.target.value)}
-          placeholder="name"
-          ref={inputRef}
+          pattern="[A-Z0-9]{4}"
+          placeholder="Name"
           required
           value={name}
         />
-        <Button
-          onClick={async e => {
+        <SubmitButton
+          className="rounded-l-none"
+          disabled={!name}
+          onClick={async () => {
             const { status } = await PartySocket.fetch(
               {
                 host: process.env.NEXT_PUBLIC_PARTYKIT_HOST!,
@@ -57,14 +68,13 @@ export default function QuizPage({
               inputRef.current?.reportValidity()
             }
           }}
+          type="button"
         >
           Continue
-        </Button>
+        </SubmitButton>
       </div>
-    )
-  }
-
-  return <Lobby id={id} room={code} />
+    </div>
+  )
 }
 
 function Lobby({ id, room }: { id: string; room: string }) {
@@ -94,13 +104,12 @@ function Lobby({ id, room }: { id: string; room: string }) {
   if (quiz.started && quiz.questions.length === 0) {
     return (
       <div className="flex flex-col gap-8 items-center">
-        <Loading />
-        <p
-          className="animate-pulse font-semibold text-center"
-          style={{ animationDuration: '3s' }}
-        >
-          generating questions
-        </p>
+        <div className="h-64 relative w-64">
+          <Loading />
+        </div>
+        <h1 className="absolute animate-pulse cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-sm text-[hsl(340deg,100%,60%)]">
+          Generating
+        </h1>
       </div>
     )
   }
@@ -139,101 +148,131 @@ function Lobby({ id, room }: { id: string; room: string }) {
     const currentQuestion = quiz.questions[quiz.currentQuestionIndex]
     if (!currentQuestion) throw Error('No current question')
     return (
-      <div className="gap-4 grid grid-cols-2 grid-rows-3 h-full place-items-center">
-        <p className="col-span-2 font-bold text-3xl text-center">
+      <div className="grid landscape:grid-cols-2 gap-4 grow w-full">
+        <p className="font-bold text-2xl text-[hsl(340deg,100%,60%)]">
           {currentQuestion.text}
         </p>
-        {currentQuestion.answers.map((answer, i) => (
-          <button
-            className={cn(
-              'font-semibold h-full rounded-2xl text-lg w-full',
+        <ul className="flex flex-col gap-4">
+          {currentQuestion.answers.map((answer, i) => {
+            const playerHasAnswered =
+              currentPlayer.name in currentQuestion.playerAnswers
+            const selected =
               currentQuestion.playerAnswers[currentPlayer.name] === i
-                ? 'bg-rose-500 text-rose-50'
-                : 'bg-rose-300 hover:bg-rose-400 text-rose-950',
-            )}
-            key={i}
-            onClick={() => {
-              socket.send(
-                JSON.stringify({ type: EventType.Answer, answerIndex: i }),
-              )
-            }}
-          >
-            {answer.text}
-          </button>
-        ))}
+            const backgroundColor = `hsl(${(i * 60 + 340) % 360}deg, 100%, 60%)`
+            const color = readableColor(backgroundColor)
+            const opacity = !playerHasAnswered || selected ? 1 : 0.5
+            return (
+              <button
+                className={cn(
+                  'disabled:cursor-not-allowed font-semibold grow rounded-2xl text-lg text-white w-full',
+                  selected && 'cursor-default',
+                  !selected && 'enabled:hover:brightness-95',
+                )}
+                disabled={!selected && playerHasAnswered}
+                key={i}
+                onClick={() => {
+                  socket.send(
+                    JSON.stringify({ type: EventType.Answer, answerIndex: i }),
+                  )
+                }}
+                style={{ backgroundColor, color, opacity }}
+              >
+                {answer.text}
+              </button>
+            )
+          })}
+        </ul>
       </div>
     )
   }
 
   return (
-    <>
-      <h1 className="col-span-2 font-bold text-5xl text-center">{room}</h1>
-
-      {quiz.startingIn && <h3>Starting in {quiz.startingIn}</h3>}
-
-      <div className="gap-4 grid grid-cols-2">
-        <ul className="flex flex-wrap gap-4">
-          {quiz.topics.map(topic => (
-            <li
-              className="bg-rose-50 flex font-semibold h-14 items-center px-4 rounded-full text-lg text-rose-500"
-              key={topic}
-            >
-              {topic}
-            </li>
-          ))}
-        </ul>
-
-        <ul className="flex flex-wrap gap-4">
-          {quiz.players.map(player => (
-            <li
-              className={cn(
-                'flex font-semibold h-14 items-center justify-center min-w-14 px-4 rounded-full text-lg',
-                player.ready
-                  ? 'bg-green-500 text-green-50'
-                  : 'bg-rose-50 text-rose-500',
-              )}
-              key={player.name}
-            >
-              {player.name}
-            </li>
-          ))}
-        </ul>
-
-        <form
-          className="bg-neutral-50 flex h-14 overflow-hidden rounded-full"
-          onSubmit={e => {
-            e.preventDefault()
-            sendTopic()
-          }}
-        >
-          <TextInput
-            className="rounded-r-none text-center w-full"
-            disabled={quiz.topics.length >= 5}
-            minLength={3}
-            onChange={e => {
-              if (e.target.value === ' ') return
-              setTopic(e.target.value)
-            }}
-            value={topic}
-          />
-          <Button className="rounded-l-none" disabled={quiz.topics.length >= 5}>
-            Add topic
-          </Button>
-        </form>
-
-        <Button
-          onClick={() => {
-            socket.send(
-              JSON.stringify({
-                type: EventType.Ready,
-                ready: !currentPlayer.ready,
-              }),
-            )
-          }}
-        >
-          {currentPlayer.ready ? 'Not ready' : 'Ready'}
-        </Button>
+    <div className="flex flex-col grow items-center justify-around max-w-md w-full">
+      <div className="h-64 relative w-64">
+        <Loading />
+        <h1 className="absolute cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-5xl text-[hsl(340deg,100%,60%)]">
+          {quiz.startingIn ? quiz.startingIn : quiz.code}
+        </h1>
       </div>
-    </>
+
+      <ul className="flex flex-wrap gap-x-4 w-full">
+        <h3 className="cursor-default font-extrabold text-xl text-[hsl(340deg,100%,60%)]/50 w-full">
+          players
+        </h3>
+        {quiz.players.map((player, index) => (
+          <PlayerButton index={index} key={player.name} player={player} />
+        ))}
+      </ul>
+
+      <ul className="flex flex-wrap gap-x-4 w-full">
+        <h3 className="cursor-default font-extrabold text-xl text-[hsl(340deg,100%,60%)]/50 w-full">
+          topics
+        </h3>
+        {quiz.topics.map((topic, index) => (
+          <li
+            className="font-extrabold text-[hsl(40deg,100%,60%)] text-xl"
+            key={topic}
+            style={{ color: `hsl(${(index * 60 - 20) % 360}deg,100%,60%)` }}
+          >
+            {topic}
+          </li>
+        ))}
+      </ul>
+
+      <form
+        className="bg-white flex h-16 overflow-hidden rounded-full w-full"
+        onSubmit={e => {
+          e.preventDefault()
+          sendTopic()
+        }}
+      >
+        <TextInput
+          className="focus:ring-[hsl(340deg,100%,60%)] px-8 rounded-r-none text-left w-full"
+          disabled={quiz.topics.length >= 5}
+          minLength={3}
+          onChange={e => {
+            if (e.target.value === ' ') return
+            setTopic(e.target.value)
+          }}
+          value={topic}
+        />
+        <Button className="rounded-l-none" disabled={quiz.topics.length >= 5}>
+          Add topic
+        </Button>
+      </form>
+
+      <Button
+        className="w-full"
+        onClick={() => {
+          socket.send(
+            JSON.stringify({
+              type: EventType.Ready,
+              ready: !currentPlayer.ready,
+            }),
+          )
+        }}
+      >
+        {currentPlayer.ready ? 'Not ready' : 'Ready'}
+      </Button>
+    </div>
+  )
+}
+
+function PlayerButton(props: { index: number; player: Player }) {
+  const [hueRotate, setHueRotate] = useState((props.index * 60 - 20) % 360)
+
+  return (
+    <button
+      className="flex font-extrabold items-center justify-center outline-none rounded-full shrink-0 text-amber-50 text-xl"
+      key={props.player.name}
+      onClick={() => setHueRotate(prev => (prev + 60) % 360)}
+      style={{
+        borderColor: `hsl(${hueRotate}deg,100%,60%)`,
+        color: `hsl(${hueRotate}deg,100%,60%)`,
+      }}
+      type="button"
+    >
+      {props.player.name}
+    </button>
   )
 }

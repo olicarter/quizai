@@ -24,7 +24,19 @@ export default class Server implements Party.Server {
   timeout: NodeJS.Timeout | null = null
 
   async onConnect(connection: Party.Connection<ConnectionState>) {
-    if (!this.quiz) return
+    if (!this.quiz) {
+      this.quiz = {
+        code: this.room.id,
+        complete: false,
+        currentQuestionIndex: 0,
+        players: [],
+        questions: [],
+        started: false,
+        startingIn: null,
+        topics: [],
+      }
+      await this.room.storage.put<Quiz>('quiz', this.quiz)
+    }
     if (!this.players.has(connection.id)) {
       this.players.set(connection.id, { name: connection.id, ready: false })
     }
@@ -64,8 +76,7 @@ export default class Server implements Party.Server {
       case EventType.Ready:
         this.players.set(sender.id, { name: sender.id, ready: event.ready })
         this.quiz.players = Array.from(this.players.values())
-        const allPlayersReady = this.quiz.players.every(player => player.ready)
-        if (allPlayersReady) {
+        if (this.quiz.players.every(player => player.ready)) {
           this.quiz.startingIn = 5
           this.timeout = setInterval(() => {
             if (!this.quiz) return
@@ -83,14 +94,22 @@ export default class Server implements Party.Server {
         this.room.broadcast(JSON.stringify(this.quiz))
         break
       case EventType.Start:
-        if (!this.quiz.players.every(player => player.ready)) return
+        if (!this.quiz.players.every(player => player.ready)) {
+          console.log("Can't start quiz until all players are ready")
+          return
+        }
 
         this.quiz.started = true
         this.room.broadcast(JSON.stringify(this.quiz))
 
         const topicsCSV = Array.from(this.topics.values()).join(', ')
         const prompt = `Generate difficult questions about these topics: ${topicsCSV}. Each question should have 3 wrong and 1 correct answer. There should be 2 questions in total. The response should be a JSON object in the format \`{ questions: { text: string, answers: { correct: boolean, text: string }[] }[] }\`.`
-        this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+        console.log('prompt', prompt)
+        const apiKey =
+          (this.room.env['OPENAI_API_KEY'] as string) ??
+          process.env.OPENAI_API_KEY
+        console.log('apiKey', apiKey)
+        this.openai = new OpenAI({ apiKey })
         const completion = await this.openai.chat.completions.create({
           messages: [{ role: 'user', content: prompt }],
           model: 'gpt-4-turbo-preview',
@@ -116,20 +135,6 @@ export default class Server implements Party.Server {
   }
 
   async onRequest(req: Party.Request) {
-    if (req.method === 'POST') {
-      this.quiz = {
-        code: this.room.id,
-        complete: false,
-        currentQuestionIndex: 0,
-        players: [],
-        questions: [],
-        started: false,
-        startingIn: null,
-        topics: [],
-      }
-      await this.room.storage.put<Quiz>('quiz', this.quiz)
-    }
-
     if (req.method === 'GET') {
       const url = new URL(req.url)
       const [, , path, id] = url.pathname.slice(1).split('/')

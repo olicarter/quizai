@@ -1,0 +1,12 @@
+[
+  { "icon": "HouseLine", "text": "Home" },
+  { "icon": "UserCircle", "text": "About Us" },
+  { "icon": "Briefcase", "text": "Services" },
+  { "icon": "ArchiveBox", "text": "Products" },
+  { "icon": "EnvelopeSimple", "text": "Contact Us" },
+  { "icon": "BookOpen", "text": "Blog" },
+  { "icon": "Question", "text": "FAQ" },
+  { "icon": "Image", "text": "Portfolio" },
+  { "icon": "Star", "text": "Testimonials" },
+  { "icon": "UsersThree", "text": "Our Team" }
+]

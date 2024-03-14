@@ -2,24 +2,28 @@ const numDots = 6
 
 export function Loading() {
   return (
-    <div className="h-32 relative rotate-45 w-32">
-      {new Array(numDots).fill(null).map((_, i) => (
-        <div
-          key={i}
-          className="absolute animate-spin inset-4 mix-blend-lighten"
-          style={{
-            animationDirection: i % 2 ? 'reverse' : 'normal',
-            animationDuration: `${2 + i * 1.01}s`,
-          }}
-        >
+    <div className="h-full relative z-10 w-full">
+      {new Array(numDots).fill(null).map((_, i) => {
+        return (
           <div
-            className="bg-amber-500 h-4 rounded-full w-4"
+            key={i}
+            className="absolute animate-spin inset-9 mix-blend-lighten"
             style={{
-              filter: `hue-rotate(${i * (360 / numDots)}deg) saturate(2)`,
+              animationDirection: i % 2 ? 'reverse' : 'normal',
+              animationDuration: `${3 + i * 1.01}s`,
             }}
-          />
-        </div>
-      ))}
+          >
+            <div
+              className="h-5 rounded-full saturate-200 w-5"
+              style={{
+                backgroundColor: `hsl(${
+                  40 + ((i * (360 / numDots)) % 360)
+                },100%,60%)`,
+              }}
+            />
+          </div>
+        )
+      })}
     </div>
   )
 }

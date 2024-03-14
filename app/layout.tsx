@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { cn } from '@/utils/cn'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -15,11 +16,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html className="bg-rose-100 text-rose-600" lang="en">
-      <body className={inter.className}>
-        <div className="flex flex-col items-center justify-center h-svh w-svh">
-          {children}
-        </div>
+    <html className="bg-amber-50 text-black" lang="en">
+      <body className={cn(inter.className, 'flex flex-col min-h-svh w-svh')}>
+        {children}
       </body>
     </html>
   )
