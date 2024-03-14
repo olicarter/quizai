@@ -1,16 +1,8 @@
 'use client'
 
-import Link, { LinkProps } from 'next/link'
 import * as PhosphorIcons from '@phosphor-icons/react/dist/ssr'
 import { type Icon as PhosphorIcon } from '@phosphor-icons/react'
-import {
-  ComponentPropsWithoutRef,
-  PropsWithChildren,
-  ReactNode,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { ComponentPropsWithoutRef } from 'react'
 import links from '@/utils/randomLinks.json'
 
 export function Nav() {
@@ -23,7 +15,11 @@ export function Nav() {
         {links.map((link, index) => (
           <NavLink
             href=""
-            icon={PhosphorIcons[link.icon]}
+            icon={
+              PhosphorIcons[
+                link.icon as keyof typeof PhosphorIcons
+              ] as PhosphorIcon
+            }
             key={link.text}
             selected={index === 0}
           >
