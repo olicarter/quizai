@@ -17,7 +17,7 @@ const corsHeaders = {
 export default class Server implements Party.Server {
   constructor(readonly room: Party.Room) {}
 
-  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  openai: OpenAI | undefined
   players = new Map<Party.Connection['id'], Player>()
   quiz: Quiz | undefined
   topics = new Set<string>()
@@ -90,6 +90,7 @@ export default class Server implements Party.Server {
 
         const topicsCSV = Array.from(this.topics.values()).join(', ')
         const prompt = `Generate difficult questions about these topics: ${topicsCSV}. Each question should have 3 wrong and 1 correct answer. There should be 2 questions in total. The response should be a JSON object in the format \`{ questions: { text: string, answers: { correct: boolean, text: string }[] }[] }\`.`
+        this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
         const completion = await this.openai.chat.completions.create({
           messages: [{ role: 'user', content: prompt }],
           model: 'gpt-4-turbo-preview',
