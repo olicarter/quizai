@@ -35,7 +35,7 @@ export default function Home() {
           maxLength={4}
           minLength={4}
           name="code"
-          pattern="[A-Z]{4}"
+          pattern="[A-Z0-9]{4}"
           placeholder="Code"
           required
         />

@@ -96,9 +96,11 @@ export default class Server implements Party.Server {
           model: 'gpt-4-turbo-preview',
           response_format: { type: 'json_object' },
         })
+        console.log('completion', completion)
         const content = JSON.parse(
           completion.choices[0].message.content ?? '[]',
         ).questions as Question[]
+        console.log('content', content)
 
         if (!Array.isArray(content)) return
 
