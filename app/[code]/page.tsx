@@ -4,7 +4,13 @@ import { PartySocket } from 'partysocket'
 import usePartySocket from 'partysocket/react'
 import { useEffect, useRef, useState } from 'react'
 import { readableColor } from 'polished'
-import { EventType, type Player, type Quiz } from '@/types'
+import {
+  type ColorClass,
+  EventType,
+  type Player,
+  type Quiz,
+  colorClasses,
+} from '@/types'
 import { TextInput } from '@/components/TextInput'
 import { Button } from '@/components/Button'
 import { cn } from '@/utils/cn'
@@ -33,13 +39,13 @@ export default function QuizPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="cursor-default font-bold text-2xl text-center text-[hsl(340deg,100%,60%)]">
+      <h3 className="cursor-default font-bold text-2xl text-center text-pink">
         Enter your name
       </h3>
       <div className="bg-white flex rounded-full">
         <TextInput
           autoComplete="off"
-          className="bg-transparent focus:ring-[hsl(340deg,100%,60%)] grow pl-6 rounded-r-none selection:bg-[hsl(340deg,100%,60%)] selection:text-amber-50"
+          className="bg-transparent focus:ring-pink grow pl-6 rounded-r-none selection:bg-pink selection:text-amber-50"
           minLength={1}
           name="code"
           onChange={e => setName(e.target.value)}
@@ -107,7 +113,7 @@ function Lobby({ id, room }: { id: string; room: string }) {
         <div className="h-64 relative w-64">
           <Loading />
         </div>
-        <h1 className="absolute animate-pulse cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-sm text-[hsl(340deg,100%,60%)]">
+        <h1 className="absolute animate-pulse cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-sm text-pink">
           Generating
         </h1>
       </div>
@@ -149,9 +155,7 @@ function Lobby({ id, room }: { id: string; room: string }) {
     if (!currentQuestion) throw Error('No current question')
     return (
       <div className="grid landscape:grid-cols-2 gap-4 grow w-full">
-        <p className="font-bold text-2xl text-[hsl(340deg,100%,60%)]">
-          {currentQuestion.text}
-        </p>
+        <p className="font-bold text-2xl text-pink">{currentQuestion.text}</p>
         <ul className="flex flex-col gap-4">
           {currentQuestion.answers.map((answer, i) => {
             const playerHasAnswered =
@@ -189,23 +193,35 @@ function Lobby({ id, room }: { id: string; room: string }) {
   return (
     <div className="flex flex-col grow items-center justify-around max-w-md w-full">
       <div className="h-64 relative w-64">
-        <Loading />
-        <h1 className="absolute cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-5xl text-[hsl(340deg,100%,60%)]">
+        <Loading dots={quiz.players.map(player => player.colorClass)} />
+        <h1 className="absolute cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-5xl text-pink">
           {quiz.startingIn ? quiz.startingIn : quiz.code}
         </h1>
       </div>
 
       <ul className="flex flex-wrap gap-x-4 w-full">
-        <h3 className="cursor-default font-extrabold text-xl text-[hsl(340deg,100%,60%)]/50 w-full">
+        <h3 className="cursor-default font-extrabold text-xl text-pink/50 w-full">
           players
         </h3>
-        {quiz.players.map((player, index) => (
-          <PlayerButton index={index} key={player.name} player={player} />
+        {quiz.players.map(player => (
+          <PlayerButton
+            onChangeColorClass={colorClass => {
+              socket.send(
+                JSON.stringify({
+                  type: EventType.ChangePlayerColorClass,
+                  colorClass,
+                  playerId: player.name,
+                }),
+              )
+            }}
+            key={player.name}
+            player={player}
+          />
         ))}
       </ul>
 
       <ul className="flex flex-wrap gap-x-4 w-full">
-        <h3 className="cursor-default font-extrabold text-xl text-[hsl(340deg,100%,60%)]/50 w-full">
+        <h3 className="cursor-default font-extrabold text-xl text-pink/50 w-full">
           topics
         </h3>
         {quiz.topics.map((topic, index) => (
@@ -227,7 +243,7 @@ function Lobby({ id, room }: { id: string; room: string }) {
         }}
       >
         <TextInput
-          className="focus:ring-[hsl(340deg,100%,60%)] px-8 rounded-r-none text-left w-full"
+          className="focus:ring-pink px-8 rounded-r-none text-left w-full"
           disabled={quiz.topics.length >= 5}
           minLength={3}
           onChange={e => {
@@ -258,21 +274,30 @@ function Lobby({ id, room }: { id: string; room: string }) {
   )
 }
 
-function PlayerButton(props: { index: number; player: Player }) {
-  const [hueRotate, setHueRotate] = useState((props.index * 60 - 20) % 360)
-
+function PlayerButton(props: {
+  onChangeColorClass: (colorClass: ColorClass) => void
+  player: Player
+}) {
   return (
     <button
       className="flex font-extrabold items-center justify-center outline-none rounded-full shrink-0 text-amber-50 text-xl"
       key={props.player.name}
-      onClick={() => setHueRotate(prev => (prev + 60) % 360)}
-      style={{
-        borderColor: `hsl(${hueRotate}deg,100%,60%)`,
-        color: `hsl(${hueRotate}deg,100%,60%)`,
+      onClick={() => {
+        const currentColorClassIndex = colorClasses.indexOf(
+          props.player.colorClass,
+        )
+        const nextColorClassIndex =
+          (currentColorClassIndex + 1) % colorClasses.length
+        const nextColorClass = colorClasses[nextColorClassIndex]
+        props.onChangeColorClass(nextColorClass)
       }}
       type="button"
     >
-      {props.player.name}
+      <span
+        className={cn('bg-clip-text text-transparent', props.player.colorClass)}
+      >
+        {props.player.name}
+      </span>
     </button>
   )
 }

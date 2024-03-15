@@ -1,6 +1,16 @@
+export const colorClasses = [
+  'bg-orange',
+  'bg-green',
+  'bg-cyan',
+  'bg-blue',
+  'bg-violet',
+  'bg-pink',
+]
+
 export enum EventType {
   AddTopic = 'add-topic',
   Answer = 'answer',
+  ChangePlayerColorClass = 'change-player-color-class',
   Ready = 'ready',
   Start = 'start',
 }
@@ -10,9 +20,12 @@ export type Answer = {
   text: string
 }
 
+export type ColorClass = (typeof colorClasses)[number]
+
 export type ConnectionState = { ready: boolean }
 
 export type Player = {
+  colorClass: ColorClass
   name: string
   ready: boolean
 }

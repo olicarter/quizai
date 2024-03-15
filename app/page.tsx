@@ -15,11 +15,11 @@ export default function Home() {
     <div className="flex flex-col grow items-center justify-around w-full">
       <div className="h-64 relative w-64">
         <Loading />
-        <h1 className="absolute cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-5xl text-[hsl(340deg,100%,60%)]">
+        <h1 className="absolute cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-5xl text-pink">
           µQuiz
         </h1>
       </div>
-      <form action={joinQuiz} className="bg-white flex rounded-full">
+      <form action={joinQuiz}>
         <JoinQuizFormElements />
       </form>
     </div>

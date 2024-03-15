@@ -38,7 +38,11 @@ export default class Server implements Party.Server {
       await this.room.storage.put<Quiz>('quiz', this.quiz)
     }
     if (!this.players.has(connection.id)) {
-      this.players.set(connection.id, { name: connection.id, ready: false })
+      this.players.set(connection.id, {
+        colorClass: 'bg-pink',
+        name: connection.id,
+        ready: false,
+      })
     }
     this.quiz.players = Array.from(this.players.values())
     this.room.broadcast(JSON.stringify(this.quiz))
@@ -50,12 +54,12 @@ export default class Server implements Party.Server {
     const event = JSON.parse(message)
 
     switch (event.type) {
-      case EventType.AddTopic:
+      case EventType.AddTopic: {
         this.topics.add(event.topic)
         this.quiz.topics = Array.from(this.topics)
         this.room.broadcast(JSON.stringify(this.quiz))
-        break
-      case EventType.Answer:
+      }
+      case EventType.Answer: {
         this.quiz.questions[this.quiz.currentQuestionIndex].playerAnswers[
           sender.id
         ] = event.answerIndex
@@ -72,9 +76,21 @@ export default class Server implements Party.Server {
           }
         }
         this.room.broadcast(JSON.stringify(this.quiz))
-        break
-      case EventType.Ready:
-        this.players.set(sender.id, { name: sender.id, ready: event.ready })
+      }
+      case EventType.ChangePlayerColorClass: {
+        const player = this.players.get(event.playerId)
+        if (!player) return
+        this.players.set(event.playerId, {
+          ...player,
+          colorClass: event.colorClass,
+        })
+        this.quiz.players = Array.from(this.players.values())
+        this.room.broadcast(JSON.stringify(this.quiz))
+      }
+      case EventType.Ready: {
+        const player = this.players.get(sender.id)
+        if (!player) return
+        this.players.set(sender.id, { ...player, ready: event.ready })
         this.quiz.players = Array.from(this.players.values())
         if (this.quiz.players.every(player => player.ready)) {
           this.quiz.startingIn = 5
@@ -92,8 +108,8 @@ export default class Server implements Party.Server {
           this.quiz.startingIn = null
         }
         this.room.broadcast(JSON.stringify(this.quiz))
-        break
-      case EventType.Start:
+      }
+      case EventType.Start: {
         if (!this.quiz.players.every(player => player.ready)) {
           console.log("Can't start quiz until all players are ready")
           return
@@ -128,7 +144,7 @@ export default class Server implements Party.Server {
           playerAnswers: {},
         }))
         this.room.broadcast(JSON.stringify(this.quiz))
-        break
+      }
     }
 
     await this.room.storage.put<Quiz>('quiz', this.quiz)
