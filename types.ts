@@ -55,6 +55,7 @@ export type Quiz = {
   difficulty: Difficulty
   players: Player[]
   questions: Question[]
+  questionsCount: number
   started: boolean
   startingIn: number | null
   topics: Topic[]

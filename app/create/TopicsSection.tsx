@@ -76,7 +76,7 @@ function Badge({ className, ...props }: BadgeProps) {
       <input type="hidden" name="topics" value={props.topic} />
       <button
         className={cn(
-          'group flex font-semibold h-12 items-center justify-center px-6 hover:pr-5 rounded-full text-lg transition-[padding] duration-150 delay-150 hover:delay-0',
+          'group flex font-semibold h-12 items-center justify-center px-6 hover:pr-5 rounded-full text-lg transition-[padding] duration-150 delay-150 hover:delay-0 truncate',
           className,
         )}
         onClick={props.onClick}

@@ -36,18 +36,19 @@ export default class Server implements Party.Server {
 
   async onConnect(connection: Party.Connection<ConnectionState>) {
     if (!this.quiz) {
-      this.quiz = {
-        code: this.room.id,
-        complete: false,
-        currentQuestionIndex: 0,
-        difficulty: defaultDifficulty,
-        players: [],
-        questions: [],
-        started: false,
-        startingIn: null,
-        topics: [],
-      }
-      await this.room.storage.put<Quiz>('quiz', this.quiz)
+      throw Error('No quiz found')
+      // this.quiz = {
+      //   code: this.room.id,
+      //   complete: false,
+      //   currentQuestionIndex: 0,
+      //   difficulty: defaultDifficulty,
+      //   players: [],
+      //   questions: [],
+      //   started: false,
+      //   startingIn: null,
+      //   topics: [],
+      // }
+      // await this.room.storage.put<Quiz>('quiz', this.quiz)
     }
     if (!this.players.has(connection.id)) {
       this.players.set(connection.id, {
@@ -185,7 +186,8 @@ export default class Server implements Party.Server {
         currentQuestionIndex: 0,
         difficulty: body.difficulty,
         players: [],
-        questions: new Array(body.questionsCount),
+        questions: [],
+        questionsCount: body.questionsCount,
         started: false,
         startingIn: null,
         topics: body.topics.map(topic => ({ color: 'fuchsia', name: topic })),
@@ -244,11 +246,7 @@ export default class Server implements Party.Server {
       .topics as Topic[]
   }
 
-  async generateQuizQuestions(
-    questionsCount: number,
-    difficulty: Difficulty,
-    topics: Topic[],
-  ): Promise<Question[]> {
+  async generateQuizQuestions(): Promise<Question[]> {
     if (!this.quiz) {
       console.error('generateQuizQuestions: No quiz found')
       return []
@@ -257,8 +255,8 @@ export default class Server implements Party.Server {
       console.error('generateQuizQuestions: OpenAI not initialized')
       return []
     }
-    const topicsCSV = topics.map(t => t.name).join(', ')
-    const prompt = `Generate ${difficulty} questions about these topics: ${topicsCSV}. Each question should have 3 wrong and 1 correct answer. There should be ${questionsCount} questions in total. The response should be a JSON object in the format \`{ questions: { text: string, answers: { correct: boolean, text: string }[], topic: string }[] }\`.`
+    const topicsCSV = this.quiz.topics.map(topic => topic.name).join(', ')
+    const prompt = `Generate ${this.quiz.difficulty} questions about these topics: ${topicsCSV}. Each question should have 3 wrong and 1 correct answer. There should be ${this.quiz.questionsCount} questions in total. The response should be a JSON object in the format \`{ questions: { text: string, answers: { correct: boolean, text: string }[], topic: string }[] }\`.`
     console.log('prompt', prompt)
     const completion = await this.openai.chat.completions.create({
       messages: [{ role: 'user', content: prompt }],
@@ -276,7 +274,10 @@ export default class Server implements Party.Server {
     }
 
     return content.questions.map(question => {
-      const topic = topics.find(topic => topic.name === question.topic)
+      if (!this.quiz) throw Error('No quiz')
+      const topic = this.quiz.topics.find(
+        topic => topic.name === question.topic,
+      )
       if (!topic) throw Error('No topic')
       return {
         ...question,
@@ -292,15 +293,9 @@ export default class Server implements Party.Server {
   async generateTopicsAndQuestions() {
     if (!this.quiz) return
     this.room.broadcast(JSON.stringify(this.quiz))
-    await this.room.storage.put<Quiz>('quiz', this.quiz)
     this.quiz.topics = await this.assignColorsToTopics(this.quiz.topics)
     this.room.broadcast(JSON.stringify(this.quiz))
-    await this.room.storage.put<Quiz>('quiz', this.quiz)
-    this.quiz.questions = await this.generateQuizQuestions(
-      this.quiz.questions.length,
-      this.quiz.difficulty,
-      this.quiz.topics,
-    )
+    this.quiz.questions = await this.generateQuizQuestions()
     this.room.broadcast(JSON.stringify(this.quiz))
     await this.room.storage.put<Quiz>('quiz', this.quiz)
   }

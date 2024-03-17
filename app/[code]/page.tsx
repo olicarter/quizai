@@ -188,30 +188,48 @@ function Lobby({ id, room }: { id: string; room: string }) {
                     'disabled:cursor-not-allowed font-semibold grow p-4 rounded-2xl text-lg w-full',
                     selected && 'cursor-default',
                     {
-                      'bg-rose-300':
-                        selected && currentQuestion.topic.color === 'rose',
+                      'bg-rose-300 hover:bg-rose-400':
+                        (!playerHasAnswered || selected) &&
+                        currentQuestion.topic.color === 'rose',
                       'bg-rose-100 hover:bg-rose-200':
-                        !selected && currentQuestion.topic.color === 'rose',
-                      'bg-amber-300':
-                        selected && currentQuestion.topic.color === 'amber',
+                        playerHasAnswered &&
+                        !selected &&
+                        currentQuestion.topic.color === 'rose',
+                      'bg-amber-300 hover:bg-amber-400':
+                        (!playerHasAnswered || selected) &&
+                        currentQuestion.topic.color === 'amber',
                       'bg-amber-100 hover:bg-amber-200':
-                        !selected && currentQuestion.topic.color === 'amber',
-                      'bg-green-300':
-                        selected && currentQuestion.topic.color === 'green',
+                        playerHasAnswered &&
+                        !selected &&
+                        currentQuestion.topic.color === 'amber',
+                      'bg-green-300 hover:bg-green-400':
+                        (!playerHasAnswered || selected) &&
+                        currentQuestion.topic.color === 'green',
                       'bg-green-100 hover:bg-green-200':
-                        !selected && currentQuestion.topic.color === 'green',
-                      'bg-cyan-300':
-                        selected && currentQuestion.topic.color === 'cyan',
+                        playerHasAnswered &&
+                        !selected &&
+                        currentQuestion.topic.color === 'green',
+                      'bg-cyan-300 hover:bg-cyan-400':
+                        (!playerHasAnswered || selected) &&
+                        currentQuestion.topic.color === 'cyan',
                       'bg-cyan-100 hover:bg-cyan-200':
-                        !selected && currentQuestion.topic.color === 'cyan',
-                      'bg-indigo-300':
-                        selected && currentQuestion.topic.color === 'indigo',
+                        playerHasAnswered &&
+                        !selected &&
+                        currentQuestion.topic.color === 'cyan',
+                      'bg-indigo-300 hover:bg-indigo-400':
+                        (!playerHasAnswered || selected) &&
+                        currentQuestion.topic.color === 'indigo',
                       'bg-indigo-100 hover:bg-indigo-200':
-                        !selected && currentQuestion.topic.color === 'indigo',
-                      'bg-fuchsia-300':
-                        selected && currentQuestion.topic.color === 'fuchsia',
+                        playerHasAnswered &&
+                        !selected &&
+                        currentQuestion.topic.color === 'indigo',
+                      'bg-fuchsia-300 hover:bg-fuchsia-400':
+                        (!playerHasAnswered || selected) &&
+                        currentQuestion.topic.color === 'fuchsia',
                       'bg-fuchsia-100 hover:bg-fuchsia-200':
-                        !selected && currentQuestion.topic.color === 'fuchsia',
+                        playerHasAnswered &&
+                        !selected &&
+                        currentQuestion.topic.color === 'fuchsia',
                     },
                   )}
                   disabled={!selected && playerHasAnswered}
