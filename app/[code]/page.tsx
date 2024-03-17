@@ -32,6 +32,24 @@ export default function QuizPage({
 
   if (id) return <Lobby id={id} room={code} />
 
+  const submitName = async () => {
+    const { status } = await PartySocket.fetch(
+      {
+        host: process.env.NEXT_PUBLIC_PARTYKIT_HOST!,
+        room: code,
+        path: `connection/${name}`,
+      },
+      { method: 'GET' },
+    )
+    if (status === 404) {
+      localStorage.setItem(localStorageKey, name)
+      setId(name)
+    } else {
+      inputRef.current?.setCustomValidity('Name already taken')
+      inputRef.current?.reportValidity()
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4 w-full">
       <h3 className="cursor-default font-bold text-2xl text-center">
@@ -40,10 +58,17 @@ export default function QuizPage({
       <div className="bg-white border-4 border-rose-500 flex rounded-full w-full">
         <TextInput
           autoComplete="off"
+          autoFocus
           className="bg-transparent border-0 focus:ring-0 ring-0 grow pl-4 rounded-r-none selection:bg-rose-400 selection:text-white w-0"
           minLength={1}
           name="name"
           onChange={e => setName(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              submitName()
+            }
+          }}
           pattern="[A-Z0-9]{4}"
           placeholder="Name"
           required
@@ -52,26 +77,10 @@ export default function QuizPage({
         <SubmitButton
           className="border-4 border-white"
           disabled={!name}
-          onClick={async () => {
-            const { status } = await PartySocket.fetch(
-              {
-                host: process.env.NEXT_PUBLIC_PARTYKIT_HOST!,
-                room: code,
-                path: `connection/${name}`,
-              },
-              { method: 'GET' },
-            )
-            if (status === 404) {
-              localStorage.setItem(localStorageKey, name)
-              setId(name)
-            } else {
-              inputRef.current?.setCustomValidity('Name already taken')
-              inputRef.current?.reportValidity()
-            }
-          }}
+          onClick={submitName}
           type="button"
         >
-          Join quiz
+          Continue
         </SubmitButton>
       </div>
     </div>

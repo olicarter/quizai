@@ -31,22 +31,29 @@ export function TopicsSection(props: { maxTopics: number }) {
         </ul>
       )}
       <div className="bg-white border-4 border-rose-500 flex h-16 rounded-full w-full">
-        <IconButton
+        {/* <IconButton
           className="absolute border-4 border-white flex h-14 items-center justify-center rounded-full text-white w-14"
           disabled={topics.length >= props.maxTopics}
           icon={MagicWand}
           onClick={() => {
             // setCode(Math.random().toString(36).slice(2, 6).toUpperCase())
           }}
-        />
+        /> */}
         <TextInput
           autoComplete="off"
-          className="bg-transparent border-none h-full pl-14 pr-0 focus:ring-0 ring-0 grow rounded-r-none selection:bg-rose-400 selection:text-white w-0"
+          className="bg-transparent border-none h-full pl-4 pr-0 focus:ring-0 ring-0 grow rounded-r-none selection:bg-rose-400 selection:text-white w-0"
           disabled={topics.length >= props.maxTopics}
           maxLength={30}
           minLength={2}
           name="topic"
           onChange={e => setTopic(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              setTopics(prev => [...prev, topic])
+              setTopic('')
+            }
+          }}
           placeholder="Topic"
           value={topic}
         />
