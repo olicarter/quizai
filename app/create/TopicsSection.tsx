@@ -20,7 +20,7 @@ export function TopicsSection(props: { maxTopics: number }) {
         <ul className="flex flex-wrap gap-2 justify-center">
           {topics.map(topic => (
             <Badge
-              className="bg-amber-300"
+              className="bg-rose-300"
               onClick={() => {
                 setTopics(prev => prev.filter(t => t !== topic))
               }}

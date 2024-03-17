@@ -155,7 +155,9 @@ function Lobby({ id, room }: { id: string; room: string }) {
             <span className="font-extrabold text-2xl">
               {quiz.currentQuestionIndex + 1}/{quiz.questions.length}
             </span>
-            <Badge color="rose">Topic Goes Here</Badge>
+            <Badge color={currentQuestion.topic.color}>
+              {currentQuestion.topic.name}
+            </Badge>
           </div>
           <p className="font-extrabold text-2xl">{currentQuestion.text}</p>
         </header>
@@ -184,8 +186,30 @@ function Lobby({ id, room }: { id: string; room: string }) {
                     'disabled:cursor-not-allowed font-semibold grow p-4 rounded-2xl text-lg w-full',
                     selected && 'cursor-default',
                     {
-                      'bg-rose-300': selected,
-                      'bg-rose-100': !selected,
+                      'bg-rose-300':
+                        selected && currentQuestion.topic.color === 'rose',
+                      'bg-rose-100 hover:bg-rose-200':
+                        !selected && currentQuestion.topic.color === 'rose',
+                      'bg-amber-300':
+                        selected && currentQuestion.topic.color === 'amber',
+                      'bg-amber-100 hover:bg-amber-200':
+                        !selected && currentQuestion.topic.color === 'amber',
+                      'bg-green-300':
+                        selected && currentQuestion.topic.color === 'green',
+                      'bg-green-100 hover:bg-green-200':
+                        !selected && currentQuestion.topic.color === 'green',
+                      'bg-cyan-300':
+                        selected && currentQuestion.topic.color === 'cyan',
+                      'bg-cyan-100 hover:bg-cyan-200':
+                        !selected && currentQuestion.topic.color === 'cyan',
+                      'bg-indigo-300':
+                        selected && currentQuestion.topic.color === 'indigo',
+                      'bg-indigo-100 hover:bg-indigo-200':
+                        !selected && currentQuestion.topic.color === 'indigo',
+                      'bg-fuchsia-300':
+                        selected && currentQuestion.topic.color === 'fuchsia',
+                      'bg-fuchsia-100 hover:bg-fuchsia-200':
+                        !selected && currentQuestion.topic.color === 'fuchsia',
                     },
                   )}
                   disabled={!selected && playerHasAnswered}
@@ -257,8 +281,8 @@ function Lobby({ id, room }: { id: string; room: string }) {
         </h3>
         <ul className="flex flex-wrap gap-2">
           {quiz.topics.map(topic => (
-            <Badge color="rose" key={topic}>
-              {topic}
+            <Badge color={topic.color} key={topic.name}>
+              {topic.name}
             </Badge>
           ))}
         </ul>

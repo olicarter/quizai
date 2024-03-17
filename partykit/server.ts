@@ -1,13 +1,15 @@
 import type * as Party from 'partykit/server'
 import OpenAI from 'openai'
 import {
+  colors,
   EventType,
   type ConnectionState,
   type Difficulty,
   type Player,
   type Question,
   type Quiz,
-  colors,
+  type Topic,
+  OpenAIGenerateQuestionsContent,
 } from '@/types'
 
 const corsHeaders = {
@@ -17,12 +19,18 @@ const corsHeaders = {
 }
 
 export default class Server implements Party.Server {
-  constructor(readonly room: Party.Room) {}
+  constructor(readonly room: Party.Room) {
+    this.openai = new OpenAI({
+      apiKey:
+        (this.room.env['OPENAI_API_KEY'] as string) ??
+        process.env.OPENAI_API_KEY,
+    })
+  }
 
-  openai: OpenAI | undefined
+  openai: OpenAI | null = null
   players = new Map<Party.Connection['id'], Player>()
   quiz: Quiz | undefined
-  topics = new Set<string>()
+  topics = new Set<Topic>()
   timeout: NodeJS.Timeout | null = null
 
   async onConnect(connection: Party.Connection<ConnectionState>) {
@@ -56,12 +64,12 @@ export default class Server implements Party.Server {
     const event = JSON.parse(message)
 
     switch (event.type) {
-      case EventType.AddTopic: {
-        this.topics.add(event.topic)
-        this.quiz.topics = Array.from(this.topics)
-        this.room.broadcast(JSON.stringify(this.quiz))
-        break
-      }
+      // case EventType.AddTopic: {
+      //   this.topics.add(event.topic)
+      //   this.quiz.topics = Array.from(this.topics)
+      //   this.room.broadcast(JSON.stringify(this.quiz))
+      //   break
+      // }
       case EventType.Answer: {
         this.quiz.questions[this.quiz.currentQuestionIndex].playerAnswers[
           sender.id
@@ -169,7 +177,7 @@ export default class Server implements Party.Server {
           status: 400,
         })
       }
-      this.topics = new Set(body.topics)
+      const topics = await this.assignColorsToTopics(body.topics)
       this.quiz = {
         code: this.generateCode(),
         complete: false,
@@ -178,11 +186,12 @@ export default class Server implements Party.Server {
         questions: [],
         started: false,
         startingIn: null,
-        topics: body.topics,
+        topics,
       }
       this.quiz.questions = await this.generateQuizQuestions(
         body.questionsCount,
         body.difficulty,
+        topics,
       )
       await this.room.storage.put<Quiz>('quiz', this.quiz)
       return new Response(JSON.stringify(this.quiz), {
@@ -204,7 +213,7 @@ export default class Server implements Party.Server {
   async onStart() {
     const storedQuiz = await this.room.storage.get<Quiz>('quiz')
     this.quiz = storedQuiz
-    if (storedQuiz?.topics) this.topics = new Set(storedQuiz.topics)
+    // if (storedQuiz?.topics) this.topics = new Set(storedQuiz.topics)
     if (storedQuiz?.players)
       this.players = new Map(
         storedQuiz.players.map(player => [player.name, player]),
@@ -215,39 +224,69 @@ export default class Server implements Party.Server {
     return Math.random().toString(36).slice(2, 6).toUpperCase()
   }
 
+  async assignColorsToTopics(topics: string[]): Promise<Topic[]> {
+    if (!this.openai) {
+      console.error('assignColorsToTopics: OpenAI not initialized')
+      return []
+    }
+    const completion = await this.openai.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: `Given these topic colors \`[{name:"arts and literature",color:"rose"},{name:"sports",color:"amber"},{name:"history",color:"green"},{name:"science and nature",color:"cyan"},{name:"geography",color:"indigo"},{name:"miscellaneous",color:"fuchsia"}]\`, assign colors to these topics: ${topics.join(
+            ', ',
+          )}. Respond in JSON in this format: { topics: { color: string, name: string }[] }.`,
+        },
+      ],
+      model: 'gpt-3.5-turbo-0125',
+      response_format: { type: 'json_object' },
+    })
+    return JSON.parse(completion.choices[0].message.content ?? '[]')
+      .topics as Topic[]
+  }
+
   async generateQuizQuestions(
     questionsCount: number,
     difficulty: Difficulty,
+    topics: Topic[],
   ): Promise<Question[]> {
     if (!this.quiz) {
       console.error('generateQuizQuestions: No quiz found')
       return []
     }
-    const topicsCSV = Array.from(this.topics.values()).join(', ')
-    const prompt = `Generate ${difficulty} questions about these topics: ${topicsCSV}. Each question should have 3 wrong and 1 correct answer. There should be ${questionsCount} questions in total. The response should be a JSON object in the format \`{ questions: { text: string, answers: { correct: boolean, text: string }[] }[] }\`.`
+    if (!this.openai) {
+      console.error('generateQuizQuestions: OpenAI not initialized')
+      return []
+    }
+    const topicsCSV = topics.map(t => t.name).join(', ')
+    const prompt = `Generate ${difficulty} questions about these topics: ${topicsCSV}. Each question should have 3 wrong and 1 correct answer. There should be ${questionsCount} questions in total. The response should be a JSON object in the format \`{ questions: { text: string, answers: { correct: boolean, text: string }[], topic: string }[] }\`.`
     console.log('prompt', prompt)
-    const apiKey =
-      (this.room.env['OPENAI_API_KEY'] as string) ?? process.env.OPENAI_API_KEY
-    console.log('apiKey', apiKey)
-    this.openai = new OpenAI({ apiKey })
     const completion = await this.openai.chat.completions.create({
       messages: [{ role: 'user', content: prompt }],
       model: 'gpt-4-turbo-preview',
       response_format: { type: 'json_object' },
     })
     console.log('completion', completion)
-    const content = JSON.parse(completion.choices[0].message.content ?? '[]')
-      .questions as Question[]
-    console.log('content', content)
+    const content = JSON.parse(
+      completion.choices[0].message.content ?? '{}',
+    ) as OpenAIGenerateQuestionsContent
 
-    if (!Array.isArray(content)) {
+    if (!Array.isArray(content.questions)) {
       console.error('generateQuizQuestions: Invalid response from OpenAI')
       return []
     }
 
-    return content.map(question => ({
-      ...question,
-      playerAnswers: {},
-    }))
+    return content.questions.map(question => {
+      const topic = topics.find(topic => topic.name === question.topic)
+      if (!topic) throw Error('No topic')
+      return {
+        ...question,
+        playerAnswers: {},
+        topic: {
+          color: topic.color,
+          name: question.topic,
+        },
+      }
+    })
   }
 }

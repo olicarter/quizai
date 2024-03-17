@@ -14,13 +14,15 @@ export function FormSections() {
 
   if (pending) {
     return (
-      <div className="flex flex-col gap-8 grow-0 items-center">
-        <div className="h-64 relative w-64">
-          <Loading />
+      <div className="flex flex-col grow items-center justify-center w-full">
+        <div className="flex flex-col">
+          <div className="h-64 relative w-64">
+            <Loading />
+          </div>
+          <h1 className="absolute animate-pulse cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-sm text-rose-400">
+            Generating
+          </h1>
         </div>
-        <h1 className="absolute animate-pulse cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-sm text-rose-400">
-          Generating
-        </h1>
       </div>
     )
   }

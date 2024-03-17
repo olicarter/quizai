@@ -37,6 +37,15 @@ export type Question = {
   answers: Answer[]
   playerAnswers: Record<Player['name'], number>
   text: string
+  topic: Topic
+}
+
+export type OpenAIGenerateQuestionsContent = {
+  questions: {
+    answers: Answer[]
+    text: string
+    topic: string
+  }[]
 }
 
 export type Quiz = {
@@ -47,5 +56,10 @@ export type Quiz = {
   questions: Question[]
   started: boolean
   startingIn: number | null
-  topics: string[]
+  topics: Topic[]
+}
+
+export type Topic = {
+  color: Color
+  name: string
 }
