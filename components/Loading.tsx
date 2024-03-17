@@ -2,12 +2,12 @@ import { cn } from '@/utils/cn'
 
 export function Loading({
   dots = [
-    'bg-orange',
-    'bg-green',
-    'bg-cyan',
-    'bg-blue',
-    'bg-violet',
-    'bg-pink',
+    'bg-rose-400',
+    'bg-amber-400',
+    'bg-green-400',
+    'bg-cyan-400',
+    'bg-indigo-400',
+    'bg-fuchsia-400',
   ],
 }: {
   dots?: string[]

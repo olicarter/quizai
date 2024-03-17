@@ -14,12 +14,12 @@ const config: Config = {
           'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
       colors: {
-        orange: 'hsl(40deg,100%,60%)',
-        green: 'hsl(100deg,100%,60%)',
-        cyan: 'hsl(160deg,100%,60%)',
-        blue: 'hsl(220deg,100%,60%)',
-        violet: 'hsl(280deg,100%,60%)',
-        pink: 'hsl(340deg,100%,60%)',
+        // orange: 'hsl(40deg,100%,60%)',
+        // green: 'hsl(100deg,100%,60%)',
+        // cyan: 'hsl(160deg,100%,60%)',
+        // blue: 'hsl(220deg,100%,60%)',
+        // violet: 'hsl(280deg,100%,60%)',
+        // pink: 'hsl(340deg,100%,60%)',
       },
       containers: {
         '8xs': '1rem',
@@ -32,6 +32,9 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('@tailwindcss/container-queries')],
+  plugins: [
+    require('@tailwindcss/container-queries'),
+    require('@tailwindcss/forms'),
+  ],
 }
 export default config

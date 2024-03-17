@@ -39,13 +39,13 @@ export default function QuizPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="cursor-default font-bold text-2xl text-center text-pink">
+      <h3 className="cursor-default font-bold text-2xl text-center text-rose-400">
         Enter your name
       </h3>
       <div className="bg-white flex rounded-full">
         <TextInput
           autoComplete="off"
-          className="bg-transparent focus:ring-pink grow pl-6 rounded-r-none selection:bg-pink selection:text-amber-50"
+          className="bg-transparent focus:ring-rose-400 grow pl-6 rounded-r-none selection:bg-rose-400 selection:text-amber-50"
           minLength={1}
           name="code"
           onChange={e => setName(e.target.value)}
@@ -113,7 +113,7 @@ function Lobby({ id, room }: { id: string; room: string }) {
         <div className="h-64 relative w-64">
           <Loading />
         </div>
-        <h1 className="absolute animate-pulse cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-sm text-pink">
+        <h1 className="absolute animate-pulse cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-sm text-rose-400">
           Generating
         </h1>
       </div>
@@ -155,7 +155,9 @@ function Lobby({ id, room }: { id: string; room: string }) {
     if (!currentQuestion) throw Error('No current question')
     return (
       <div className="grid landscape:grid-cols-2 gap-4 grow w-full">
-        <p className="font-bold text-2xl text-pink">{currentQuestion.text}</p>
+        <p className="font-bold text-2xl text-rose-400">
+          {currentQuestion.text}
+        </p>
         <ul className="flex flex-col gap-4">
           {currentQuestion.answers.map((answer, i) => {
             const playerHasAnswered =
@@ -194,14 +196,14 @@ function Lobby({ id, room }: { id: string; room: string }) {
     <div className="flex flex-col grow items-center justify-around max-w-md w-full">
       <div className="h-64 relative w-64">
         <Loading dots={quiz.players.map(player => player.colorClass)} />
-        <h1 className="absolute cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-5xl text-pink">
+        <h1 className="absolute cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-5xl text-rose-400">
           {quiz.startingIn ? quiz.startingIn : quiz.code}
         </h1>
       </div>
 
       <ul className="flex flex-wrap gap-x-4 w-full">
-        <h3 className="cursor-default font-extrabold text-xl text-pink/50 w-full">
-          players
+        <h3 className="cursor-default font-extrabold text-xl text-rose-400/50 w-full">
+          Players
         </h3>
         {quiz.players.map(player => (
           <PlayerButton
@@ -221,8 +223,8 @@ function Lobby({ id, room }: { id: string; room: string }) {
       </ul>
 
       <ul className="flex flex-wrap gap-x-4 w-full">
-        <h3 className="cursor-default font-extrabold text-xl text-pink/50 w-full">
-          topics
+        <h3 className="cursor-default font-extrabold text-xl text-rose-400/50 w-full">
+          Topics
         </h3>
         {quiz.topics.map((topic, index) => (
           <li
@@ -235,7 +237,7 @@ function Lobby({ id, room }: { id: string; room: string }) {
         ))}
       </ul>
 
-      <form
+      {/* <form
         className="bg-white flex h-16 overflow-hidden rounded-full w-full"
         onSubmit={e => {
           e.preventDefault()
@@ -243,7 +245,7 @@ function Lobby({ id, room }: { id: string; room: string }) {
         }}
       >
         <TextInput
-          className="focus:ring-pink px-8 rounded-r-none text-left w-full"
+          className="focus:ring-rose-400 px-8 rounded-r-none text-left w-full"
           disabled={quiz.topics.length >= 5}
           minLength={3}
           onChange={e => {
@@ -255,7 +257,7 @@ function Lobby({ id, room }: { id: string; room: string }) {
         <Button className="rounded-l-none" disabled={quiz.topics.length >= 5}>
           Add topic
         </Button>
-      </form>
+      </form> */}
 
       <Button
         className="w-full"

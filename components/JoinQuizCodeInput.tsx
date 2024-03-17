@@ -1,30 +1,30 @@
 'use client'
 
 import { useState } from 'react'
-import { MagicWand } from '@phosphor-icons/react'
+// import { MagicWand } from '@phosphor-icons/react'
 import { SubmitButton } from './SubmitButton'
 import { TextInput } from './TextInput'
 import { cn } from '@/utils/cn'
 
-export function JoinQuizFormElements() {
+export function JoinQuizCodeInput() {
   const [code, setCode] = useState('')
 
   return (
-    <div className="bg-white border-4 border-pink flex rounded-full">
-      <button
-        className="absolute bg-pink border-4 border-white flex h-16 hover:bg-[hsl(340deg,90%,50%)] items-center justify-center rounded-full text-white w-16"
+    <div className="bg-white border-4 border-rose-500 flex rounded-full w-full">
+      {/* <button
+        className="absolute bg-rose-400 border-4 border-white flex h-16 hover:bg-[hsl(340deg,90%,50%)] items-center justify-center rounded-full text-white w-16"
         onClick={() => {
           setCode(Math.random().toString(36).slice(2, 6).toUpperCase())
         }}
         type="button"
       >
         <MagicWand size={24} weight="bold" />
-      </button>
+      </button> */}
       <TextInput
         autoComplete="off"
         className={cn(
-          'bg-transparent ring-0 grow min-w-48 pl-16 rounded-r-none selection:bg-pink selection:text-amber-50 w-0',
-          code.length > 0 && 'text-3xl tracking-widest uppercase',
+          'bg-transparent border-0 focus:ring-0 ring-0 grow pl-4 rounded-r-none selection:bg-rose-400 selection:text-white w-0',
+          code.length > 0 && 'font-bold text-3xl tracking-widest uppercase',
         )}
         maxLength={4}
         minLength={4}

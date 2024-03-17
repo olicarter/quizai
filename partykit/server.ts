@@ -3,6 +3,7 @@ import OpenAI from 'openai'
 import {
   EventType,
   type ConnectionState,
+  type Difficulty,
   type Player,
   type Question,
   type Quiz,
@@ -39,7 +40,7 @@ export default class Server implements Party.Server {
     }
     if (!this.players.has(connection.id)) {
       this.players.set(connection.id, {
-        colorClass: 'bg-pink',
+        colorClass: 'bg-rose-400',
         name: connection.id,
         ready: false,
       })
@@ -117,33 +118,6 @@ export default class Server implements Party.Server {
 
         this.quiz.started = true
         this.room.broadcast(JSON.stringify(this.quiz))
-
-        const topicsCSV = Array.from(this.topics.values()).join(', ')
-        const prompt = `Generate difficult questions about these topics: ${topicsCSV}. Each question should have 3 wrong and 1 correct answer. There should be 2 questions in total. The response should be a JSON object in the format \`{ questions: { text: string, answers: { correct: boolean, text: string }[] }[] }\`.`
-        console.log('prompt', prompt)
-        const apiKey =
-          (this.room.env['OPENAI_API_KEY'] as string) ??
-          process.env.OPENAI_API_KEY
-        console.log('apiKey', apiKey)
-        this.openai = new OpenAI({ apiKey })
-        const completion = await this.openai.chat.completions.create({
-          messages: [{ role: 'user', content: prompt }],
-          model: 'gpt-4-turbo-preview',
-          response_format: { type: 'json_object' },
-        })
-        console.log('completion', completion)
-        const content = JSON.parse(
-          completion.choices[0].message.content ?? '[]',
-        ).questions as Question[]
-        console.log('content', content)
-
-        if (!Array.isArray(content)) return
-
-        this.quiz.questions = content.map(question => ({
-          ...question,
-          playerAnswers: {},
-        }))
-        this.room.broadcast(JSON.stringify(this.quiz))
       }
     }
 
@@ -151,23 +125,64 @@ export default class Server implements Party.Server {
   }
 
   async onRequest(req: Party.Request) {
-    if (req.method === 'GET') {
-      const url = new URL(req.url)
-      const [, , path, id] = url.pathname.slice(1).split('/')
-      if (path === 'connection') {
-        if (id) {
-          if (this.room.getConnection(id)) {
-            return new Response(null, { headers: corsHeaders, status: 200 })
-          } else {
-            return new Response(null, { headers: corsHeaders, status: 404 })
-          }
+    const url = new URL(req.url)
+    const pathnameSegments = url.pathname.slice(1).split('/')
+    const path = pathnameSegments[2]
+
+    if (req.method === 'GET' && path === 'connection') {
+      const id = pathnameSegments[3]
+      if (id) {
+        if (this.room.getConnection(id)) {
+          return new Response(null, { headers: corsHeaders, status: 200 })
         } else {
-          return new Response("Missing 'id' query parameter", {
-            headers: corsHeaders,
-            status: 400,
-          })
+          return new Response(null, { headers: corsHeaders, status: 404 })
         }
+      } else {
+        return new Response("Missing 'id' query parameter", {
+          headers: corsHeaders,
+          status: 400,
+        })
       }
+    }
+
+    if (req.method === 'POST' && path === 'create') {
+      type Body = Partial<{
+        difficulty: Difficulty
+        questionsCount: number
+        topics: string[]
+      }>
+      const body = await req.json<Body>()
+      if (
+        !body.difficulty ||
+        !body.questionsCount ||
+        !body.topics ||
+        body.topics.length === 0
+      ) {
+        return new Response('Missing required parameters', {
+          headers: corsHeaders,
+          status: 400,
+        })
+      }
+      this.topics = new Set(body.topics)
+      this.quiz = {
+        code: this.generateCode(),
+        complete: false,
+        currentQuestionIndex: 0,
+        players: [],
+        questions: [],
+        started: false,
+        startingIn: null,
+        topics: body.topics,
+      }
+      this.quiz.questions = await this.generateQuizQuestions(
+        body.questionsCount,
+        body.difficulty,
+      )
+      await this.room.storage.put<Quiz>('quiz', this.quiz)
+      return new Response(JSON.stringify(this.quiz), {
+        headers: corsHeaders,
+        status: 200,
+      })
     }
 
     if (this.quiz) {
@@ -188,5 +203,45 @@ export default class Server implements Party.Server {
       this.players = new Map(
         storedQuiz.players.map(player => [player.name, player]),
       )
+  }
+
+  generateCode(): string {
+    return Math.random().toString(36).slice(2, 6).toUpperCase()
+  }
+
+  async generateQuizQuestions(
+    questionsCount: number,
+    difficulty: Difficulty,
+  ): Promise<Question[]> {
+    if (!this.quiz) {
+      console.error('generateQuizQuestions: No quiz found')
+      return []
+    }
+    const topicsCSV = Array.from(this.topics.values()).join(', ')
+    const prompt = `Generate ${difficulty} questions about these topics: ${topicsCSV}. Each question should have 3 wrong and 1 correct answer. There should be ${questionsCount} questions in total. The response should be a JSON object in the format \`{ questions: { text: string, answers: { correct: boolean, text: string }[] }[] }\`.`
+    console.log('prompt', prompt)
+    const apiKey =
+      (this.room.env['OPENAI_API_KEY'] as string) ?? process.env.OPENAI_API_KEY
+    console.log('apiKey', apiKey)
+    this.openai = new OpenAI({ apiKey })
+    const completion = await this.openai.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      model: 'gpt-4-turbo-preview',
+      response_format: { type: 'json_object' },
+    })
+    console.log('completion', completion)
+    const content = JSON.parse(completion.choices[0].message.content ?? '[]')
+      .questions as Question[]
+    console.log('content', content)
+
+    if (!Array.isArray(content)) {
+      console.error('generateQuizQuestions: Invalid response from OpenAI')
+      return []
+    }
+
+    return content.map(question => ({
+      ...question,
+      playerAnswers: {},
+    }))
   }
 }

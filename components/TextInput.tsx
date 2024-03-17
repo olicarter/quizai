@@ -8,7 +8,8 @@ export const TextInput = forwardRef<
   return (
     <input
       className={cn(
-        'bg-white focus:ring-[hsl(340deg,90%,50%)] font-semibold h-16 outline-none placeholder:text-rose-300 ring-4 ring-inset ring-pink rounded-full text-center text-pink text-xl',
+        `bg-white font-semibold h-16 outline-none ring-4 ring-inset ring-rose-400 rounded-full text-center text-black text-xl
+        disabled:cursor-not-allowed focus:ring-[hsl(340deg,90%,50%)] placeholder:text-neutral-300`,
         className,
       )}
       ref={ref}

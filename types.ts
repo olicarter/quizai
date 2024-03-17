@@ -1,11 +1,16 @@
 export const colorClasses = [
-  'bg-orange',
-  'bg-green',
-  'bg-cyan',
-  'bg-blue',
-  'bg-violet',
-  'bg-pink',
+  'bg-rose-300',
+  'bg-amber-300',
+  'bg-green-300',
+  'bg-cyan-300',
+  'bg-indigo-300',
+  'bg-fuchsia-300',
 ]
+
+export enum Difficulty {
+  Easy = 'fairly easy',
+  Hard = 'extremely difficult',
+}
 
 export enum EventType {
   AddTopic = 'add-topic',
