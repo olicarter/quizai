@@ -3,8 +3,7 @@
 import { PartySocket } from 'partysocket'
 import usePartySocket from 'partysocket/react'
 import { useEffect, useRef, useState } from 'react'
-import { readableColor } from 'polished'
-import { colors, EventType, type Color, type Player, type Quiz } from '@/types'
+import { colors, EventType, type Quiz } from '@/types'
 import { TextInput } from '@/components/TextInput'
 import { Button } from '@/components/Button'
 import { cn } from '@/utils/cn'
@@ -91,8 +90,6 @@ function Lobby({ id, room }: { id: string; room: string }) {
   // const [topic, setTopic] = useState('')
   const [quiz, setQuiz] = useState<Quiz>()
 
-  console.log(quiz)
-
   const socket = usePartySocket({
     host: process.env.NEXT_PUBLIC_PARTYKIT_HOST!,
     id,
@@ -159,6 +156,10 @@ function Lobby({ id, room }: { id: string; room: string }) {
   if (quiz.started && quiz.questions.length > 0) {
     const currentQuestion = quiz.questions[quiz.currentQuestionIndex]
     if (!currentQuestion) throw Error('No current question')
+    // const allPlayersAnswered =
+    //   Object.keys(currentQuestion.playerAnswers).length === quiz.players.length
+    const allPlayersAnsweredCurrentQuestion =
+      Object.keys(currentQuestion.playerAnswers).length === quiz.players.length
     return (
       <div className="flex flex-col grow items-stretch justify-between w-full">
         <header className="flex flex-col gap-4">
@@ -173,91 +174,138 @@ function Lobby({ id, room }: { id: string; room: string }) {
           <p className="font-extrabold text-2xl">{currentQuestion.text}</p>
         </header>
         <div className="flex flex-col gap-8">
-          <ul className="flex flex-wrap gap-2">
-            {quiz.players.map(player => (
-              <Badge
-                color={player.color}
-                key={player.name}
-                showCheck={player.name in currentQuestion.playerAnswers}
-              >
-                {player.name}
-              </Badge>
-            ))}
-          </ul>
+          {!quiz.showQuestionResults && (
+            <ul className="flex flex-wrap gap-2">
+              {quiz.players.map(player => (
+                <Badge
+                  color={player.color}
+                  key={player.name}
+                  showCheck={player.name in currentQuestion.playerAnswers}
+                >
+                  {player.name}
+                </Badge>
+              ))}
+            </ul>
+          )}
           <ul className="flex flex-col gap-4">
             {currentQuestion.answers.map((answer, i) => {
               const playerHasAnswered =
                 currentPlayer.name in currentQuestion.playerAnswers
               const selected =
                 currentQuestion.playerAnswers[currentPlayer.name] === i
-              const opacity = !playerHasAnswered || selected ? 1 : 0.5
+              const playersSelectingThisAnswer = quiz.players.filter(
+                player => currentQuestion.playerAnswers[player.name] === i,
+              )
               return (
-                <button
-                  className={cn(
-                    'disabled:cursor-not-allowed font-semibold grow p-4 rounded-2xl text-lg w-full',
-                    selected && 'cursor-default',
-                    {
-                      'bg-rose-300 hover:bg-rose-400':
-                        (!playerHasAnswered || selected) &&
-                        currentQuestion.topic.color === 'rose',
-                      'bg-rose-100 hover:bg-rose-200':
-                        playerHasAnswered &&
-                        !selected &&
-                        currentQuestion.topic.color === 'rose',
-                      'bg-amber-300 hover:bg-amber-400':
-                        (!playerHasAnswered || selected) &&
-                        currentQuestion.topic.color === 'amber',
-                      'bg-amber-100 hover:bg-amber-200':
-                        playerHasAnswered &&
-                        !selected &&
-                        currentQuestion.topic.color === 'amber',
-                      'bg-green-300 hover:bg-green-400':
-                        (!playerHasAnswered || selected) &&
-                        currentQuestion.topic.color === 'green',
-                      'bg-green-100 hover:bg-green-200':
-                        playerHasAnswered &&
-                        !selected &&
-                        currentQuestion.topic.color === 'green',
-                      'bg-cyan-300 hover:bg-cyan-400':
-                        (!playerHasAnswered || selected) &&
-                        currentQuestion.topic.color === 'cyan',
-                      'bg-cyan-100 hover:bg-cyan-200':
-                        playerHasAnswered &&
-                        !selected &&
-                        currentQuestion.topic.color === 'cyan',
-                      'bg-indigo-300 hover:bg-indigo-400':
-                        (!playerHasAnswered || selected) &&
-                        currentQuestion.topic.color === 'indigo',
-                      'bg-indigo-100 hover:bg-indigo-200':
-                        playerHasAnswered &&
-                        !selected &&
-                        currentQuestion.topic.color === 'indigo',
-                      'bg-fuchsia-300 hover:bg-fuchsia-400':
-                        (!playerHasAnswered || selected) &&
-                        currentQuestion.topic.color === 'fuchsia',
-                      'bg-fuchsia-100 hover:bg-fuchsia-200':
-                        playerHasAnswered &&
-                        !selected &&
-                        currentQuestion.topic.color === 'fuchsia',
-                    },
+                <div className="relative" key={i}>
+                  {quiz.showQuestionResults && (
+                    <ul className="absolute flex gap-2 top-0 left-0">
+                      {playersSelectingThisAnswer.map(player => (
+                        <Badge color={player.color} key={player.name}>
+                          {player.name}
+                        </Badge>
+                      ))}
+                    </ul>
                   )}
-                  disabled={!selected && playerHasAnswered}
-                  key={i}
-                  onClick={() => {
-                    socket.send(
-                      JSON.stringify({
-                        type: EventType.Answer,
-                        answerIndex: i,
-                      }),
-                    )
-                  }}
-                  style={{ opacity }}
-                >
-                  {answer.text}
-                </button>
+                  <button
+                    className={cn(
+                      'font-semibold grow p-4 rounded-2xl text-lg w-full',
+                      selected && 'cursor-default',
+                      {
+                        'bg-rose-300 hover:bg-rose-400':
+                          (!playerHasAnswered || selected) &&
+                          currentQuestion.topic.color === 'rose',
+                        'bg-rose-100':
+                          playerHasAnswered &&
+                          !selected &&
+                          currentQuestion.topic.color === 'rose',
+                        'bg-amber-300 hover:bg-amber-400':
+                          (!playerHasAnswered || selected) &&
+                          currentQuestion.topic.color === 'amber',
+                        'bg-amber-100':
+                          playerHasAnswered &&
+                          !selected &&
+                          currentQuestion.topic.color === 'amber',
+                        'bg-green-300 hover:bg-green-400':
+                          (!playerHasAnswered || selected) &&
+                          currentQuestion.topic.color === 'green',
+                        'bg-green-100':
+                          playerHasAnswered &&
+                          !selected &&
+                          currentQuestion.topic.color === 'green',
+                        'bg-cyan-300 hover:bg-cyan-400':
+                          (!playerHasAnswered || selected) &&
+                          currentQuestion.topic.color === 'cyan',
+                        'bg-cyan-100':
+                          playerHasAnswered &&
+                          !selected &&
+                          currentQuestion.topic.color === 'cyan',
+                        'bg-indigo-300 hover:bg-indigo-400':
+                          (!playerHasAnswered || selected) &&
+                          currentQuestion.topic.color === 'indigo',
+                        'bg-indigo-100':
+                          playerHasAnswered &&
+                          !selected &&
+                          currentQuestion.topic.color === 'indigo',
+                        'bg-fuchsia-300 hover:bg-fuchsia-400':
+                          !playerHasAnswered &&
+                          currentQuestion.topic.color === 'fuchsia',
+                        'bg-fuchsia-300':
+                          selected && currentQuestion.topic.color === 'fuchsia',
+                        'bg-fuchsia-100':
+                          playerHasAnswered &&
+                          !selected &&
+                          currentQuestion.topic.color === 'fuchsia',
+                      },
+                      quiz.showQuestionResults && 'bg-transparent',
+                      quiz.showQuestionResults &&
+                        !answer.correct &&
+                        'line-through',
+                    )}
+                    disabled={playerHasAnswered}
+                    onClick={() => {
+                      socket.send(
+                        JSON.stringify({
+                          type: EventType.Answer,
+                          answerIndex: i,
+                        }),
+                      )
+                    }}
+                  >
+                    <mark
+                      className={cn(
+                        quiz.showQuestionResults && answer.correct
+                          ? 'bg-green-300'
+                          : 'bg-transparent',
+                      )}
+                    >
+                      {answer.text}
+                    </mark>
+                  </button>
+                </div>
               )
             })}
           </ul>
+          {allPlayersAnsweredCurrentQuestion && !quiz.showQuestionResults && (
+            <Button
+              onClick={() => {
+                socket.send(JSON.stringify({ type: EventType.ViewResults }))
+              }}
+            >
+              View results
+            </Button>
+          )}
+          {quiz.showQuestionResults && (
+            <Button
+              onClick={() => {
+                socket.send(JSON.stringify({ type: EventType.NextQuestion }))
+              }}
+            >
+              {quiz.currentQuestionIndex + 1 < quiz.questions.length
+                ? 'Next question'
+                : 'View results'}
+            </Button>
+          )}
         </div>
       </div>
     )

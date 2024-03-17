@@ -9,8 +9,10 @@ export enum EventType {
   AddTopic = 'add-topic',
   Answer = 'answer',
   ChangePlayerColor = 'change-player-color',
+  NextQuestion = 'next-question',
   Ready = 'ready',
   Start = 'start',
+  ViewResults = 'view-results',
 }
 
 export type Answer = {
@@ -21,6 +23,14 @@ export type Answer = {
 export type Color = (typeof colors)[number]
 
 export type ConnectionState = { ready: boolean }
+
+export type OpenAIGenerateQuestionsContent = {
+  questions: {
+    answers: Answer[]
+    text: string
+    topic: string
+  }[]
+}
 
 export type Player = {
   color: Color
@@ -40,14 +50,6 @@ export type Question = {
   topic: Topic
 }
 
-export type OpenAIGenerateQuestionsContent = {
-  questions: {
-    answers: Answer[]
-    text: string
-    topic: string
-  }[]
-}
-
 export type Quiz = {
   code: string
   complete: boolean
@@ -56,6 +58,7 @@ export type Quiz = {
   players: Player[]
   questions: Question[]
   questionsCount: number
+  showQuestionResults: boolean
   started: boolean
   startingIn: number | null
   topics: Topic[]

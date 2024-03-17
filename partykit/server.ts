@@ -1,4 +1,3 @@
-import { defaultDifficulty } from './../types'
 import type * as Party from 'partykit/server'
 import OpenAI from 'openai'
 import {
@@ -74,21 +73,20 @@ export default class Server implements Party.Server {
       //   break
       // }
       case EventType.Answer: {
-        this.quiz.questions[this.quiz.currentQuestionIndex].playerAnswers[
-          sender.id
-        ] = event.answerIndex
-        // If the current question has been answered by all players
-        if (
-          Object.keys(
-            this.quiz.questions[this.quiz.currentQuestionIndex].playerAnswers,
-          ).length === this.players.size
-        ) {
-          if (this.quiz.currentQuestionIndex < this.quiz.questions.length - 1) {
-            this.quiz.currentQuestionIndex++
-          } else {
-            this.quiz.complete = true
-          }
-        }
+        const currentQuestion =
+          this.quiz.questions[this.quiz.currentQuestionIndex]
+        // Record the player's answer
+        currentQuestion.playerAnswers[sender.id] = event.answerIndex
+        // const currentQuestionAnsweredByAllPlayers =
+        //   Object.keys(currentQuestion.playerAnswers).length ===
+        //   this.players.size
+        // if (currentQuestionAnsweredByAllPlayers) {
+        //   if (this.quiz.currentQuestionIndex < this.quiz.questions.length - 1) {
+        //     this.quiz.currentQuestionIndex++
+        //   } else {
+        //     this.quiz.complete = true
+        //   }
+        // }
         this.room.broadcast(JSON.stringify(this.quiz))
         break
       }
@@ -100,6 +98,16 @@ export default class Server implements Party.Server {
           color: event.color,
         })
         this.quiz.players = Array.from(this.players.values())
+        this.room.broadcast(JSON.stringify(this.quiz))
+        break
+      }
+      case EventType.NextQuestion: {
+        if (this.quiz.currentQuestionIndex < this.quiz.questions.length - 1) {
+          this.quiz.currentQuestionIndex++
+        } else {
+          this.quiz.complete = true
+        }
+        this.quiz.showQuestionResults = false
         this.room.broadcast(JSON.stringify(this.quiz))
         break
       }
@@ -133,6 +141,12 @@ export default class Server implements Party.Server {
         }
 
         this.quiz.started = true
+        this.room.broadcast(JSON.stringify(this.quiz))
+        break
+      }
+      case EventType.ViewResults: {
+        if (!this.quiz) return
+        this.quiz.showQuestionResults = true
         this.room.broadcast(JSON.stringify(this.quiz))
         break
       }
@@ -188,6 +202,7 @@ export default class Server implements Party.Server {
         players: [],
         questions: [],
         questionsCount: body.questionsCount,
+        showQuestionResults: false,
         started: false,
         startingIn: null,
         topics: body.topics.map(topic => ({ color: 'fuchsia', name: topic })),
