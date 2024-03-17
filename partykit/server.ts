@@ -4,7 +4,7 @@ import {
   colors,
   EventType,
   type ConnectionState,
-  type Difficulty,
+  Difficulty,
   type Player,
   type Question,
   type Quiz,
@@ -34,21 +34,25 @@ export default class Server implements Party.Server {
   timeout: NodeJS.Timeout | null = null
 
   async onConnect(connection: Party.Connection<ConnectionState>) {
-    if (!this.quiz) {
-      throw Error('No quiz found')
-      // this.quiz = {
-      //   code: this.room.id,
-      //   complete: false,
-      //   currentQuestionIndex: 0,
-      //   difficulty: defaultDifficulty,
-      //   players: [],
-      //   questions: [],
-      //   started: false,
-      //   startingIn: null,
-      //   topics: [],
-      // }
-      // await this.room.storage.put<Quiz>('quiz', this.quiz)
-    }
+    console.log('onConnect', this.quiz)
+    if (!this.quiz) return
+    // if (!this.quiz) {
+    //   // throw Error('No quiz found')
+    //   this.quiz = {
+    //     code: this.room.id,
+    //     complete: false,
+    //     currentQuestionIndex: 0,
+    //     difficulty: Difficulty.Hard,
+    //     players: [],
+    //     questions: [],
+    //     started: false,
+    //     startingIn: null,
+    //     topics: [],
+    //   }
+    //   await this.room.storage.put<Quiz>('quiz', this.quiz)
+    // }
+    console.log(connection)
+    console.log(this.quiz)
     if (!this.players.has(connection.id)) {
       this.players.set(connection.id, {
         color: colors[0],
@@ -195,7 +199,7 @@ export default class Server implements Party.Server {
         })
       }
       this.quiz = {
-        code: this.generateCode(),
+        code: this.room.id,
         complete: false,
         currentQuestionIndex: 0,
         difficulty: body.difficulty,
@@ -232,10 +236,6 @@ export default class Server implements Party.Server {
       this.players = new Map(
         storedQuiz.players.map(player => [player.name, player]),
       )
-  }
-
-  generateCode(): string {
-    return Math.random().toString(36).slice(2, 6).toUpperCase()
   }
 
   async assignColorsToTopics(topics: Topic[]): Promise<Topic[]> {

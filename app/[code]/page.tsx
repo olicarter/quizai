@@ -29,24 +29,26 @@ export default function QuizPage({
     return <p className="animate-pulse opacity-0 text-center">Loading...</p>
   }
 
+  console.log(id)
+
   if (id) return <Lobby id={id} room={code} />
 
   const submitName = async () => {
-    const { status } = await PartySocket.fetch(
-      {
-        host: process.env.NEXT_PUBLIC_PARTYKIT_HOST!,
-        room: code,
-        path: `connection/${name}`,
-      },
-      { method: 'GET' },
-    )
-    if (status === 404) {
-      localStorage.setItem(localStorageKey, name)
-      setId(name)
-    } else {
-      inputRef.current?.setCustomValidity('Name already taken')
-      inputRef.current?.reportValidity()
-    }
+    // const { status } = await PartySocket.fetch(
+    //   {
+    //     host: process.env.NEXT_PUBLIC_PARTYKIT_HOST!,
+    //     room: code,
+    //     path: `connection/${name}`,
+    //   },
+    //   { method: 'GET' },
+    // )
+    // if (status === 404) {
+    localStorage.setItem(localStorageKey, name)
+    setId(name)
+    // } else {
+    //   inputRef.current?.setCustomValidity('Name already taken')
+    //   inputRef.current?.reportValidity()
+    // }
   }
 
   return (
@@ -95,6 +97,7 @@ function Lobby({ id, room }: { id: string; room: string }) {
     id,
     room,
     onMessage(event) {
+      console.log(event)
       const quiz = JSON.parse(event.data) as Quiz
       if (quiz) setQuiz(quiz)
     },
@@ -213,36 +216,46 @@ function Lobby({ id, room }: { id: string; room: string }) {
                       selected && 'cursor-default',
                       {
                         'bg-rose-300 hover:bg-rose-400':
-                          (!playerHasAnswered || selected) &&
+                          !playerHasAnswered &&
                           currentQuestion.topic.color === 'rose',
+                        'bg-rose-300':
+                          selected && currentQuestion.topic.color === 'rose',
                         'bg-rose-100':
                           playerHasAnswered &&
                           !selected &&
                           currentQuestion.topic.color === 'rose',
                         'bg-amber-300 hover:bg-amber-400':
-                          (!playerHasAnswered || selected) &&
+                          !playerHasAnswered &&
                           currentQuestion.topic.color === 'amber',
+                        'bg-amber-300':
+                          selected && currentQuestion.topic.color === 'amber',
                         'bg-amber-100':
                           playerHasAnswered &&
                           !selected &&
                           currentQuestion.topic.color === 'amber',
                         'bg-green-300 hover:bg-green-400':
-                          (!playerHasAnswered || selected) &&
+                          !playerHasAnswered &&
                           currentQuestion.topic.color === 'green',
+                        'bg-green-300':
+                          selected && currentQuestion.topic.color === 'green',
                         'bg-green-100':
                           playerHasAnswered &&
                           !selected &&
                           currentQuestion.topic.color === 'green',
                         'bg-cyan-300 hover:bg-cyan-400':
-                          (!playerHasAnswered || selected) &&
+                          !playerHasAnswered &&
                           currentQuestion.topic.color === 'cyan',
+                        'bg-cyan-300':
+                          selected && currentQuestion.topic.color === 'cyan',
                         'bg-cyan-100':
                           playerHasAnswered &&
                           !selected &&
                           currentQuestion.topic.color === 'cyan',
                         'bg-indigo-300 hover:bg-indigo-400':
-                          (!playerHasAnswered || selected) &&
+                          !playerHasAnswered &&
                           currentQuestion.topic.color === 'indigo',
+                        'bg-indigo-300':
+                          selected && currentQuestion.topic.color === 'indigo',
                         'bg-indigo-100':
                           playerHasAnswered &&
                           !selected &&
