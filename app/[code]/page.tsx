@@ -82,6 +82,8 @@ function Lobby({ id, room }: { id: string; room: string }) {
   // const [topic, setTopic] = useState('')
   const [quiz, setQuiz] = useState<Quiz>()
 
+  console.log(quiz)
+
   const socket = usePartySocket({
     host: process.env.NEXT_PUBLIC_PARTYKIT_HOST!,
     id,

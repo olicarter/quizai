@@ -52,6 +52,7 @@ export type Quiz = {
   code: string
   complete: boolean
   currentQuestionIndex: number
+  difficulty: Difficulty
   players: Player[]
   questions: Question[]
   started: boolean
@@ -63,3 +64,5 @@ export type Topic = {
   color: Color
   name: string
 }
+
+export const defaultDifficulty = Difficulty.Hard

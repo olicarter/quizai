@@ -1,3 +1,4 @@
+import { defaultDifficulty } from './../types'
 import type * as Party from 'partykit/server'
 import OpenAI from 'openai'
 import {
@@ -39,6 +40,7 @@ export default class Server implements Party.Server {
         code: this.room.id,
         complete: false,
         currentQuestionIndex: 0,
+        difficulty: defaultDifficulty,
         players: [],
         questions: [],
         started: false,
@@ -177,23 +179,18 @@ export default class Server implements Party.Server {
           status: 400,
         })
       }
-      const topics = await this.assignColorsToTopics(body.topics)
       this.quiz = {
         code: this.generateCode(),
         complete: false,
         currentQuestionIndex: 0,
+        difficulty: body.difficulty,
         players: [],
-        questions: [],
+        questions: new Array(body.questionsCount),
         started: false,
         startingIn: null,
-        topics,
+        topics: body.topics.map(topic => ({ color: 'fuchsia', name: topic })),
       }
-      this.quiz.questions = await this.generateQuizQuestions(
-        body.questionsCount,
-        body.difficulty,
-        topics,
-      )
-      await this.room.storage.put<Quiz>('quiz', this.quiz)
+      this.generateTopicsAndQuestions()
       return new Response(JSON.stringify(this.quiz), {
         headers: corsHeaders,
         status: 200,
@@ -224,7 +221,7 @@ export default class Server implements Party.Server {
     return Math.random().toString(36).slice(2, 6).toUpperCase()
   }
 
-  async assignColorsToTopics(topics: string[]): Promise<Topic[]> {
+  async assignColorsToTopics(topics: Topic[]): Promise<Topic[]> {
     if (!this.openai) {
       console.error('assignColorsToTopics: OpenAI not initialized')
       return []
@@ -233,12 +230,14 @@ export default class Server implements Party.Server {
       messages: [
         {
           role: 'user',
-          content: `Given these topic colors \`[{name:"arts and literature",color:"rose"},{name:"sports",color:"amber"},{name:"history",color:"green"},{name:"science and nature",color:"cyan"},{name:"geography",color:"indigo"},{name:"miscellaneous",color:"fuchsia"}]\`, assign colors to these topics: ${topics.join(
-            ', ',
-          )}. Respond in JSON in this format: { topics: { color: string, name: string }[] }.`,
+          content: `Given these topic colors \`[{name:"arts and literature",color:"rose"},{name:"sports",color:"amber"},{name:"history",color:"green"},{name:"science and nature",color:"cyan"},{name:"geography",color:"indigo"},{name:"miscellaneous",color:"fuchsia"}]\`, assign colors to these topics: ${topics
+            .map(topic => topic.name)
+            .join(
+              ', ',
+            )}. Respond in JSON in this format: { topics: { color: string, name: string }[] }.`,
         },
       ],
-      model: 'gpt-3.5-turbo-0125',
+      model: 'gpt-4-turbo-preview',
       response_format: { type: 'json_object' },
     })
     return JSON.parse(completion.choices[0].message.content ?? '[]')
@@ -288,5 +287,21 @@ export default class Server implements Party.Server {
         },
       }
     })
+  }
+
+  async generateTopicsAndQuestions() {
+    if (!this.quiz) return
+    this.room.broadcast(JSON.stringify(this.quiz))
+    await this.room.storage.put<Quiz>('quiz', this.quiz)
+    this.quiz.topics = await this.assignColorsToTopics(this.quiz.topics)
+    this.room.broadcast(JSON.stringify(this.quiz))
+    await this.room.storage.put<Quiz>('quiz', this.quiz)
+    this.quiz.questions = await this.generateQuizQuestions(
+      this.quiz.questions.length,
+      this.quiz.difficulty,
+      this.quiz.topics,
+    )
+    this.room.broadcast(JSON.stringify(this.quiz))
+    await this.room.storage.put<Quiz>('quiz', this.quiz)
   }
 }
