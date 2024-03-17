@@ -4,18 +4,13 @@ import { PartySocket } from 'partysocket'
 import usePartySocket from 'partysocket/react'
 import { useEffect, useRef, useState } from 'react'
 import { readableColor } from 'polished'
-import {
-  type ColorClass,
-  EventType,
-  type Player,
-  type Quiz,
-  colorClasses,
-} from '@/types'
+import { colors, EventType, type Color, type Player, type Quiz } from '@/types'
 import { TextInput } from '@/components/TextInput'
 import { Button } from '@/components/Button'
 import { cn } from '@/utils/cn'
 import { Loading } from '@/components/Loading'
 import { SubmitButton } from '@/components/SubmitButton'
+import { Badge } from '@/components/Badge'
 
 export default function QuizPage({
   params: { code },
@@ -38,16 +33,16 @@ export default function QuizPage({
   if (id) return <Lobby id={id} room={code} />
 
   return (
-    <div className="flex flex-col gap-4">
-      <h3 className="cursor-default font-bold text-2xl text-center text-rose-400">
+    <div className="flex flex-col gap-4 w-full">
+      <h3 className="cursor-default font-bold text-2xl text-center">
         Enter your name
       </h3>
-      <div className="bg-white flex rounded-full">
+      <div className="bg-white border-4 border-rose-500 flex rounded-full w-full">
         <TextInput
           autoComplete="off"
-          className="bg-transparent focus:ring-rose-400 grow pl-6 rounded-r-none selection:bg-rose-400 selection:text-amber-50"
+          className="bg-transparent border-0 focus:ring-0 ring-0 grow pl-4 rounded-r-none selection:bg-rose-400 selection:text-white w-0"
           minLength={1}
-          name="code"
+          name="name"
           onChange={e => setName(e.target.value)}
           pattern="[A-Z0-9]{4}"
           placeholder="Name"
@@ -55,7 +50,7 @@ export default function QuizPage({
           value={name}
         />
         <SubmitButton
-          className="rounded-l-none"
+          className="border-4 border-white"
           disabled={!name}
           onClick={async () => {
             const { status } = await PartySocket.fetch(
@@ -76,7 +71,7 @@ export default function QuizPage({
           }}
           type="button"
         >
-          Continue
+          Join quiz
         </SubmitButton>
       </div>
     </div>
@@ -84,7 +79,7 @@ export default function QuizPage({
 }
 
 function Lobby({ id, room }: { id: string; room: string }) {
-  const [topic, setTopic] = useState('')
+  // const [topic, setTopic] = useState('')
   const [quiz, setQuiz] = useState<Quiz>()
 
   const socket = usePartySocket({
@@ -97,10 +92,10 @@ function Lobby({ id, room }: { id: string; room: string }) {
     },
   })
 
-  const sendTopic = () => {
-    socket.send(JSON.stringify({ type: EventType.AddTopic, topic }))
-    setTopic('')
-  }
+  // const sendTopic = () => {
+  //   socket.send(JSON.stringify({ type: EventType.AddTopic, topic }))
+  //   setTopic('')
+  // }
 
   if (!quiz) return null
 
@@ -154,87 +149,119 @@ function Lobby({ id, room }: { id: string; room: string }) {
     const currentQuestion = quiz.questions[quiz.currentQuestionIndex]
     if (!currentQuestion) throw Error('No current question')
     return (
-      <div className="grid landscape:grid-cols-2 gap-4 grow w-full">
-        <p className="font-bold text-2xl text-rose-400">
-          {currentQuestion.text}
-        </p>
-        <ul className="flex flex-col gap-4">
-          {currentQuestion.answers.map((answer, i) => {
-            const playerHasAnswered =
-              currentPlayer.name in currentQuestion.playerAnswers
-            const selected =
-              currentQuestion.playerAnswers[currentPlayer.name] === i
-            const backgroundColor = `hsl(${(i * 60 + 340) % 360}deg, 100%, 60%)`
-            const color = readableColor(backgroundColor)
-            const opacity = !playerHasAnswered || selected ? 1 : 0.5
-            return (
-              <button
-                className={cn(
-                  'disabled:cursor-not-allowed font-semibold grow rounded-2xl text-lg text-white w-full',
-                  selected && 'cursor-default',
-                  !selected && 'enabled:hover:brightness-95',
-                )}
-                disabled={!selected && playerHasAnswered}
-                key={i}
-                onClick={() => {
-                  socket.send(
-                    JSON.stringify({ type: EventType.Answer, answerIndex: i }),
-                  )
-                }}
-                style={{ backgroundColor, color, opacity }}
+      <div className="flex flex-col grow items-stretch justify-between w-full">
+        <header className="flex flex-col gap-4">
+          <div className="flex gap-4">
+            <span className="font-extrabold text-2xl">
+              {quiz.currentQuestionIndex + 1}/{quiz.questions.length}
+            </span>
+            <Badge color="rose">Topic Goes Here</Badge>
+          </div>
+          <p className="font-extrabold text-2xl">{currentQuestion.text}</p>
+        </header>
+        <div className="flex flex-col gap-8">
+          <ul className="flex flex-wrap gap-2">
+            {quiz.players.map(player => (
+              <Badge
+                color={player.color}
+                key={player.name}
+                showCheck={player.name in currentQuestion.playerAnswers}
               >
-                {answer.text}
-              </button>
-            )
-          })}
-        </ul>
+                {player.name}
+              </Badge>
+            ))}
+          </ul>
+          <ul className="flex flex-col gap-4">
+            {currentQuestion.answers.map((answer, i) => {
+              const playerHasAnswered =
+                currentPlayer.name in currentQuestion.playerAnswers
+              const selected =
+                currentQuestion.playerAnswers[currentPlayer.name] === i
+              const opacity = !playerHasAnswered || selected ? 1 : 0.5
+              return (
+                <button
+                  className={cn(
+                    'disabled:cursor-not-allowed font-semibold grow p-4 rounded-2xl text-lg w-full',
+                    selected && 'cursor-default',
+                    {
+                      'bg-rose-300': selected,
+                      'bg-rose-100': !selected,
+                    },
+                  )}
+                  disabled={!selected && playerHasAnswered}
+                  key={i}
+                  onClick={() => {
+                    socket.send(
+                      JSON.stringify({
+                        type: EventType.Answer,
+                        answerIndex: i,
+                      }),
+                    )
+                  }}
+                  style={{ opacity }}
+                >
+                  {answer.text}
+                </button>
+              )
+            })}
+          </ul>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col grow items-center justify-around max-w-md w-full">
-      <div className="h-64 relative w-64">
-        <Loading dots={quiz.players.map(player => player.colorClass)} />
-        <h1 className="absolute cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-5xl text-rose-400">
-          {quiz.startingIn ? quiz.startingIn : quiz.code}
-        </h1>
+    <div className="flex flex-col gap-8 grow items-stretch max-w-md w-full">
+      <div className="flex flex-col grow items-center justify-center">
+        <div className="h-64 relative w-64">
+          <Loading dots={quiz.players.map(player => player.color)} />
+          <h1 className="absolute cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-5xl text-rose-500">
+            {quiz.startingIn ? quiz.startingIn : quiz.code}
+          </h1>
+        </div>
       </div>
 
-      <ul className="flex flex-wrap gap-x-4 w-full">
-        <h3 className="cursor-default font-extrabold text-xl text-rose-400/50 w-full">
+      <section className="flex flex-col gap-4">
+        <h3 className="cursor-default font-extrabold leading-none text-2xl">
           Players
         </h3>
-        {quiz.players.map(player => (
-          <PlayerButton
-            onChangeColorClass={colorClass => {
-              socket.send(
-                JSON.stringify({
-                  type: EventType.ChangePlayerColorClass,
-                  colorClass,
-                  playerId: player.name,
-                }),
-              )
-            }}
-            key={player.name}
-            player={player}
-          />
-        ))}
-      </ul>
+        <ul className="flex flex-wrap gap-2">
+          {quiz.players.map(player => (
+            <Badge
+              color={player.color}
+              key={player.name}
+              onClick={() => {
+                const currentColorClassIndex = colors.indexOf(player.color)
+                const nextColorClassIndex =
+                  (currentColorClassIndex + 1) % colors.length
+                const nextColorClass = colors[nextColorClassIndex]
+                socket.send(
+                  JSON.stringify({
+                    type: EventType.ChangePlayerColor,
+                    color: nextColorClass,
+                    playerId: player.name,
+                  }),
+                )
+              }}
+              showCheck={player.ready}
+            >
+              {player.name}
+            </Badge>
+          ))}
+        </ul>
+      </section>
 
-      <ul className="flex flex-wrap gap-x-4 w-full">
-        <h3 className="cursor-default font-extrabold text-xl text-rose-400/50 w-full">
+      <ul className="flex flex-col gap-4">
+        <h3 className="cursor-default font-extrabold leading-none text-2xl">
           Topics
         </h3>
-        {quiz.topics.map((topic, index) => (
-          <li
-            className="font-extrabold text-[hsl(40deg,100%,60%)] text-xl"
-            key={topic}
-            style={{ color: `hsl(${(index * 60 - 20) % 360}deg,100%,60%)` }}
-          >
-            {topic}
-          </li>
-        ))}
+        <ul className="flex flex-wrap gap-2">
+          {quiz.topics.map(topic => (
+            <Badge color="rose" key={topic}>
+              {topic}
+            </Badge>
+          ))}
+        </ul>
       </ul>
 
       {/* <form
@@ -273,33 +300,5 @@ function Lobby({ id, room }: { id: string; room: string }) {
         {currentPlayer.ready ? 'Not ready' : 'Ready'}
       </Button>
     </div>
-  )
-}
-
-function PlayerButton(props: {
-  onChangeColorClass: (colorClass: ColorClass) => void
-  player: Player
-}) {
-  return (
-    <button
-      className="flex font-extrabold items-center justify-center outline-none rounded-full shrink-0 text-amber-50 text-xl"
-      key={props.player.name}
-      onClick={() => {
-        const currentColorClassIndex = colorClasses.indexOf(
-          props.player.colorClass,
-        )
-        const nextColorClassIndex =
-          (currentColorClassIndex + 1) % colorClasses.length
-        const nextColorClass = colorClasses[nextColorClassIndex]
-        props.onChangeColorClass(nextColorClass)
-      }}
-      type="button"
-    >
-      <span
-        className={cn('bg-clip-text text-transparent', props.player.colorClass)}
-      >
-        {props.player.name}
-      </span>
-    </button>
   )
 }

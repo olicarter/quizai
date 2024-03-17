@@ -1,11 +1,4 @@
-export const colorClasses = [
-  'bg-rose-300',
-  'bg-amber-300',
-  'bg-green-300',
-  'bg-cyan-300',
-  'bg-indigo-300',
-  'bg-fuchsia-300',
-]
+export const colors = ['rose', 'amber', 'green', 'cyan', 'indigo', 'fuchsia']
 
 export enum Difficulty {
   Easy = 'fairly easy',
@@ -15,7 +8,7 @@ export enum Difficulty {
 export enum EventType {
   AddTopic = 'add-topic',
   Answer = 'answer',
-  ChangePlayerColorClass = 'change-player-color-class',
+  ChangePlayerColor = 'change-player-color',
   Ready = 'ready',
   Start = 'start',
 }
@@ -25,12 +18,12 @@ export type Answer = {
   text: string
 }
 
-export type ColorClass = (typeof colorClasses)[number]
+export type Color = (typeof colors)[number]
 
 export type ConnectionState = { ready: boolean }
 
 export type Player = {
-  colorClass: ColorClass
+  color: Color
   name: string
   ready: boolean
 }

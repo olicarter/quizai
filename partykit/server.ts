@@ -7,6 +7,7 @@ import {
   type Player,
   type Question,
   type Quiz,
+  colors,
 } from '@/types'
 
 const corsHeaders = {
@@ -40,7 +41,7 @@ export default class Server implements Party.Server {
     }
     if (!this.players.has(connection.id)) {
       this.players.set(connection.id, {
-        colorClass: 'bg-rose-400',
+        color: colors[0],
         name: connection.id,
         ready: false,
       })
@@ -59,6 +60,7 @@ export default class Server implements Party.Server {
         this.topics.add(event.topic)
         this.quiz.topics = Array.from(this.topics)
         this.room.broadcast(JSON.stringify(this.quiz))
+        break
       }
       case EventType.Answer: {
         this.quiz.questions[this.quiz.currentQuestionIndex].playerAnswers[
@@ -77,16 +79,18 @@ export default class Server implements Party.Server {
           }
         }
         this.room.broadcast(JSON.stringify(this.quiz))
+        break
       }
-      case EventType.ChangePlayerColorClass: {
+      case EventType.ChangePlayerColor: {
         const player = this.players.get(event.playerId)
         if (!player) return
         this.players.set(event.playerId, {
           ...player,
-          colorClass: event.colorClass,
+          color: event.color,
         })
         this.quiz.players = Array.from(this.players.values())
         this.room.broadcast(JSON.stringify(this.quiz))
+        break
       }
       case EventType.Ready: {
         const player = this.players.get(sender.id)
@@ -109,6 +113,7 @@ export default class Server implements Party.Server {
           this.quiz.startingIn = null
         }
         this.room.broadcast(JSON.stringify(this.quiz))
+        break
       }
       case EventType.Start: {
         if (!this.quiz.players.every(player => player.ready)) {
@@ -118,6 +123,7 @@ export default class Server implements Party.Server {
 
         this.quiz.started = true
         this.room.broadcast(JSON.stringify(this.quiz))
+        break
       }
     }
 

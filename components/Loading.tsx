@@ -1,20 +1,10 @@
+import { colors } from '@/types'
 import { cn } from '@/utils/cn'
 
-export function Loading({
-  dots = [
-    'bg-rose-400',
-    'bg-amber-400',
-    'bg-green-400',
-    'bg-cyan-400',
-    'bg-indigo-400',
-    'bg-fuchsia-400',
-  ],
-}: {
-  dots?: string[]
-}) {
+export function Loading({ dots = colors }: { dots?: string[] }) {
   return (
     <div className="h-full relative z-10 w-full">
-      {dots.map((className, i) => {
+      {dots.map((color, i) => {
         return (
           <div
             key={i}
@@ -25,7 +15,14 @@ export function Loading({
             }}
           >
             <div
-              className={cn('h-5 rounded-full saturate-200 w-5', className)}
+              className={cn('h-5 rounded-full saturate-200 w-5', {
+                'bg-rose-400': color === 'rose',
+                'bg-amber-400': color === 'amber',
+                'bg-green-400': color === 'green',
+                'bg-cyan-400': color === 'cyan',
+                'bg-indigo-400': color === 'indigo',
+                'bg-fuchsia-400': color === 'fuchsia',
+              })}
             />
           </div>
         )
