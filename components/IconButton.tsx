@@ -1,9 +1,10 @@
-import { type ComponentPropsWithoutRef } from 'react'
-import { cn } from '@/utils/cn'
-import { type Icon as PhosphorIcon } from '@phosphor-icons/react'
+'use motion'
 
-interface IconButtonProps
-  extends Omit<ComponentPropsWithoutRef<'button'>, 'children'> {
+import { type Icon as PhosphorIcon } from '@phosphor-icons/react'
+import { type HTMLMotionProps, motion } from 'framer-motion'
+import { cn } from '@/utils/cn'
+
+interface IconButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   icon: PhosphorIcon
   loading?: boolean
 }
@@ -16,7 +17,7 @@ export function IconButton({
   ...props
 }: IconButtonProps) {
   return (
-    <button
+    <motion.button
       className={cn(
         `bg-rose-500 flex font-semibold h-16 items-center justify-center rounded-full shrink-0 text-white text-xl
         disabled:cursor-not-allowed disabled:text-rose-300 enabled:hover:bg-rose-600`,
@@ -27,6 +28,6 @@ export function IconButton({
       {...props}
     >
       <Icon size={28} weight="bold" />
-    </button>
+    </motion.button>
   )
 }

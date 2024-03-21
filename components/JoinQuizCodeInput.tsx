@@ -23,7 +23,7 @@ export function JoinQuizCodeInput() {
       <TextInput
         autoComplete="off"
         className={cn(
-          'bg-transparent border-0 focus:ring-0 ring-0 grow pl-4 rounded-r-none selection:bg-rose-400 selection:text-white w-0',
+          'bg-transparent border-0 focus:ring-0 ring-0 grow pl-4 rounded-r-none w-0',
           code.length > 0 && 'font-bold text-3xl tracking-widest uppercase',
         )}
         maxLength={4}

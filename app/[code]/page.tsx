@@ -1,6 +1,5 @@
 'use client'
 
-import { PartySocket } from 'partysocket'
 import usePartySocket from 'partysocket/react'
 import { useEffect, useRef, useState } from 'react'
 import { colors, EventType, type Quiz } from '@/types'
@@ -10,6 +9,7 @@ import { cn } from '@/utils/cn'
 import { Loading } from '@/components/Loading'
 import { SubmitButton } from '@/components/SubmitButton'
 import { Badge } from '@/components/Badge'
+import { AnimatePresence, motion } from 'framer-motion'
 
 export default function QuizPage({
   params: { code },
@@ -60,7 +60,7 @@ export default function QuizPage({
         <TextInput
           autoComplete="off"
           autoFocus
-          className="bg-transparent border-0 focus:ring-0 ring-0 grow pl-4 rounded-r-none selection:bg-rose-400 selection:text-white w-0"
+          className="bg-transparent border-0 focus:ring-0 ring-0 grow pl-4 rounded-r-none w-0"
           minLength={1}
           name="name"
           onChange={e => setName(e.target.value)}
@@ -119,7 +119,7 @@ function Lobby({ id, room }: { id: string; room: string }) {
         <div className="h-64 relative w-64">
           <Loading />
         </div>
-        <h1 className="absolute animate-pulse cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-sm text-rose-400">
+        <h1 className="absolute animate-pulse cursor-default flex font-extrabold inset-0 items-center justify-center text-sm text-rose-400">
           Generating
         </h1>
       </div>
@@ -163,18 +163,47 @@ function Lobby({ id, room }: { id: string; room: string }) {
     //   Object.keys(currentQuestion.playerAnswers).length === quiz.players.length
     const allPlayersAnsweredCurrentQuestion =
       Object.keys(currentQuestion.playerAnswers).length === quiz.players.length
+    const list = {
+      visible: {
+        opacity: 1,
+        transition: {
+          when: 'beforeChildren',
+          staggerChildren: 0.1,
+        },
+      },
+      hidden: { opacity: 0 },
+    }
+    const item = {
+      visible: {
+        opacity: 1,
+        scale: 1,
+        transition: { type: 'spring', bounce: 2, stiffness: 80, velocity: 3 },
+      },
+      hidden: { opacity: 0, scale: 0.9 },
+    }
     return (
       <div className="flex flex-col grow items-stretch justify-between w-full">
         <header className="flex flex-col gap-4">
           <div className="flex gap-4">
             <span className="font-extrabold text-2xl">
-              {quiz.currentQuestionIndex + 1}/{quiz.questions.length}
+              <AnimatePresence>
+                <motion.span
+                  animate={{ opacity: 1, y: 0 }}
+                  className="inline-flex"
+                  exit={{ opacity: 0, y: -8 }}
+                  initial={{ opacity: 0, y: 8 }}
+                  transition={{ type: 'spring', duration: 0.5 }}
+                >
+                  {quiz.currentQuestionIndex + 1}
+                </motion.span>
+              </AnimatePresence>
+              /{quiz.questions.length}
             </span>
             <Badge color={currentQuestion.topic.color}>
               {currentQuestion.topic.name}
             </Badge>
           </div>
-          <p className="font-extrabold text-2xl">{currentQuestion.text}</p>
+          <AnimatedQuestion text={currentQuestion.text} />
         </header>
         <div className="flex flex-col gap-8">
           {!quiz.showQuestionResults && (
@@ -190,7 +219,12 @@ function Lobby({ id, room }: { id: string; room: string }) {
               ))}
             </ul>
           )}
-          <ul className="flex flex-col gap-4">
+          <motion.ul
+            animate="visible"
+            className="flex flex-col gap-4"
+            initial="hidden"
+            variants={list}
+          >
             {currentQuestion.answers.map((answer, i) => {
               const playerHasAnswered =
                 currentPlayer.name in currentQuestion.playerAnswers
@@ -210,7 +244,7 @@ function Lobby({ id, room }: { id: string; room: string }) {
                       ))}
                     </ul>
                   )}
-                  <button
+                  <motion.button
                     className={cn(
                       'font-semibold grow p-4 rounded-2xl text-lg w-full',
                       selected && 'cursor-default',
@@ -284,6 +318,7 @@ function Lobby({ id, room }: { id: string; room: string }) {
                         }),
                       )
                     }}
+                    variants={item}
                   >
                     <mark
                       className={cn(
@@ -294,11 +329,11 @@ function Lobby({ id, room }: { id: string; room: string }) {
                     >
                       {answer.text}
                     </mark>
-                  </button>
+                  </motion.button>
                 </div>
               )
             })}
-          </ul>
+          </motion.ul>
           {allPlayersAnsweredCurrentQuestion && !quiz.showQuestionResults && (
             <Button
               onClick={() => {
@@ -329,9 +364,18 @@ function Lobby({ id, room }: { id: string; room: string }) {
       <div className="flex flex-col grow items-center justify-center">
         <div className="h-64 relative w-64">
           <Loading dots={quiz.players.map(player => player.color)} />
-          <h1 className="absolute cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-5xl text-rose-500">
-            {quiz.startingIn ? quiz.startingIn : quiz.code}
-          </h1>
+          <AnimatePresence mode="wait">
+            <motion.h1
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute cursor-default flex font-extrabold inset-0 items-center justify-center text-5xl text-rose-500"
+              exit={{ opacity: 0, y: -8 }}
+              initial={{ opacity: 0, y: 8 }}
+              key={quiz.startingIn ? quiz.startingIn : quiz.code}
+              transition={{ type: 'spring', duration: 0.15 }}
+            >
+              {quiz.startingIn ? quiz.startingIn : quiz.code}
+            </motion.h1>
+          </AnimatePresence>
         </div>
       </div>
 
@@ -414,5 +458,39 @@ function Lobby({ id, room }: { id: string; room: string }) {
         {currentPlayer.ready ? 'Not ready' : 'Ready'}
       </Button>
     </div>
+  )
+}
+
+function AnimatedQuestion(props: { text: string }) {
+  const paragraph = {
+    visible: {
+      opacity: 1,
+      transition: {
+        when: 'beforeChildren',
+        staggerChildren: 0.01,
+      },
+    },
+    hidden: { opacity: 0 },
+  }
+  const span = {
+    visible: {
+      opacity: 1,
+      transition: { ease: 'easeIn', duration: 0.5 },
+    },
+    hidden: { opacity: 0 },
+  }
+  return (
+    <motion.p
+      animate="visible"
+      className="font-extrabold text-2xl"
+      initial="hidden"
+      variants={paragraph}
+    >
+      {props.text.split(' ').map(word => (
+        <motion.span key={word} variants={span}>
+          {word}{' '}
+        </motion.span>
+      ))}
+    </motion.p>
   )
 }

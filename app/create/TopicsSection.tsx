@@ -12,7 +12,7 @@ export function TopicsSection(props: { maxTopics: number }) {
   const [topics, setTopics] = useState<string[]>([])
 
   return (
-    <section className="flex flex-col gap-4">
+    <>
       <h3 className="text-center font-extrabold leading-none text-2xl">
         Topics
       </h3>
@@ -41,7 +41,7 @@ export function TopicsSection(props: { maxTopics: number }) {
         /> */}
         <TextInput
           autoComplete="off"
-          className="bg-transparent border-none h-full pl-4 pr-0 focus:ring-0 ring-0 grow rounded-r-none selection:bg-rose-400 selection:text-white w-0"
+          className="bg-transparent border-none h-full pl-4 pr-0 focus:ring-0 ring-0 grow rounded-r-none w-0"
           disabled={topics.length >= props.maxTopics}
           maxLength={30}
           minLength={2}
@@ -69,7 +69,7 @@ export function TopicsSection(props: { maxTopics: number }) {
           Add topic
         </Button>
       </div>
-    </section>
+    </>
   )
 }
 

@@ -2,6 +2,7 @@ import { Loading } from '@/components/Loading'
 import { redirect } from 'next/navigation'
 import { JoinQuizCodeInput } from '@/components/JoinQuizCodeInput'
 import Link from 'next/link'
+import { Button } from '@/components/Button'
 
 export default function Home() {
   const joinQuiz = async (formData: FormData) => {
@@ -17,7 +18,7 @@ export default function Home() {
       <div className="flex grow items-center justify-center">
         <div className="h-64 relative w-64">
           <Loading />
-          <h1 className="absolute cursor-default flex font-extrabold inset-0 items-center justify-center selection:bg-transparent text-5xl text-rose-500">
+          <h1 className="absolute cursor-default flex font-extrabold inset-0 items-center justify-center text-5xl text-rose-500">
             µQuiz
           </h1>
         </div>
@@ -25,14 +26,11 @@ export default function Home() {
       <form action={joinQuiz}>
         <JoinQuizCodeInput />
       </form>
-      <div className="flex h-16 items-center justify-center">
-        <p className="font-extrabold text-xl">
-          or{' '}
-          <Link className="text-rose-500 underline" href="/create">
-            create quiz
-          </Link>
-        </p>
-      </div>
+      <Link className="rounded-full text-rose-500 underline" href="/create">
+        <Button className="w-full" type="button">
+          Generate quiz
+        </Button>
+      </Link>
     </div>
   )
 }
